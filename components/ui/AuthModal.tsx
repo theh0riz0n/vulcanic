@@ -95,15 +95,10 @@ export default function AuthModal({ onSubmit, isLoading, error }: AuthModalProps
                   </a>
                 </li>
                 <li>
-                  <strong>Step 2:</strong> Open this URL:{" "}
-                  <a 
-                    href="view-source:https://eduvulcan.pl/api/ap/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline break-words"
-                  >
-                    view-source:https://eduvulcan.pl/api/ap/
-                  </a>
+                  <strong>Step 2:</strong> Open this URL and copy the <code>&lt;html&gt;</code> tag:{" "}
+                  <p className="bg-gray-800 p-2 rounded overflow-hidden text-xs" style={{ wordBreak: 'break-all' }}>
+                    <code>https://eduvulcan.pl/api/ap/</code>
+                  </p>
                 </li>
                 <li>
                   <strong>Step 3:</strong> Copy the <strong>entire</strong> content of the page and paste it into the field above

@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ApiapProvider } from '@/context/ApiapContext';
+import { SnowflakesProvider } from '@/context/SnowflakesContext';
+import Snowflakes from '@/components/effects/Snowflakes';
 
 // Создаем клиент для react-query
 const queryClient = new QueryClient({
@@ -32,9 +34,12 @@ export default function App({ Component, pageProps, router }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <ApiapProvider>
-        <AnimatePresence mode="wait" initial={true}>
-          <Component {...pageProps} key={router.route} />
-        </AnimatePresence>
+        <SnowflakesProvider>
+          <Snowflakes />
+          <AnimatePresence mode="wait" initial={true}>
+            <Component {...pageProps} key={router.route} />
+          </AnimatePresence>
+        </SnowflakesProvider>
       </ApiapProvider>
     </QueryClientProvider>
   );

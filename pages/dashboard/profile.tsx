@@ -13,15 +13,18 @@ import {
   UserCircle,
   EnvelopeSimple,
   GraduationCap,
-  Buildings
+  Buildings,
+  Snowflake
 } from '@phosphor-icons/react';
 import { useRouter } from 'next/router';
 import withAuth from '@/lib/utils/withAuth';
 import { getUserData, clearUserData } from '@/lib/utils/auth-utils';
+import { useSnowflakes } from '@/context/SnowflakesContext';
 
 function Profile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
   
   // Get user data from localStorage
   const { name, email } = getUserData();
@@ -92,6 +95,52 @@ function Profile() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Card className="p-6">
+            <h3 className="text-lg font-mono font-bold mb-4">App Settings</h3>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Snowflake size={20} className="mr-2 text-blue-400" />
+                    <span>Snowflakes Effect</span>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer"
+                      checked={showSnowflakes}
+                      onChange={(e) => setShowSnowflakes(e.target.checked)}
+                    />
+                    <div className="relative w-11 h-6 bg-surface rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+                {showSnowflakes && (
+                  <div className="pt-2">
+                    <label htmlFor="snowflake-intensity" className="block mb-2 text-sm font-medium">
+                      Snowflake Intensity: {snowflakeIntensity}%
+                    </label>
+                    <input
+                      id="snowflake-intensity"
+                      type="range"
+                      min="10"
+                      max="100"
+                      step="10"
+                      value={snowflakeIntensity}
+                      onChange={(e) => setSnowflakeIntensity(Number(e.target.value))}
+                      className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="p-6">
             <h3 className="text-lg font-mono font-bold mb-4">Technical Data</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
@@ -119,7 +168,7 @@ function Profile() {
                   <Gift size={16} className="mr-2 text-primary" />
                   <span>App Version</span>
                 </div>
-                <div className="text-text-secondary font-mono">1.0.0</div>
+                <div className="text-text-secondary font-mono">1.5.0</div>
               </div>
             </div>
           </Card>
@@ -131,13 +180,17 @@ function Profile() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="p-6">
-            <h3 className="text-lg font-bold mb-4">pedal ↓</h3>
-            <div className="flex justify-center">
-              <img 
-                src="/images/pedal.png" 
-                alt="Pedal arrow down" 
-                className="max-w-full h-auto rounded-lg opacity-80 hover:opacity-100 transition-opacity"
-              />
+            <h3 className="text-lg font-bold mb-4">Credits</h3>
+            <div className="flex">
+                <p>
+                    This app is made by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a>
+                    <br />
+                    You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/eduvulcan-app" target="_blank" rel="noopener noreferrer">here</a>
+                    <br />
+                    <p className="text-text-secondary">
+                        Yaroshenko to jebany pedal
+                    </p>
+                </p> 
             </div>
           </Card>
         </motion.div>
@@ -153,40 +206,10 @@ function Profile() {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <Card className="p-6">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
-                <div className="flex items-center">
-                  <IdentificationCard size={16} className="mr-2 text-primary" />
-                  <span>User ID</span>
-                </div>
-                <div className="text-text-secondary font-mono bg-background px-2 py-1 rounded text-xs overflow-x-auto max-w-[200px] whitespace-nowrap">
-                  {userData.id}
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
-                <div className="flex items-center">
-                  <Building size={16} className="mr-2 text-primary" />
-                  <span>School ID</span>
-                </div>
-                <div className="text-text-secondary font-mono bg-background px-2 py-1 rounded text-xs overflow-x-auto max-w-[200px] whitespace-nowrap">
-                  {userData.unitId}
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
-                <div className="flex items-center">
-                  <Gift size={16} className="mr-2 text-primary" />
-                  <span>App Version</span>
-                </div>
-                <div className="text-text-secondary font-mono">1.0.0</div>
-              </div>
-            </div>
-
             <button 
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="mt-6 w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70"
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70"
             >
               <SignOut size={20} className="mr-2" />
               {isLoggingOut ? 'Logging out...' : 'Log Out'}
