@@ -7,8 +7,9 @@ import { useCurrentWeekData } from '@/lib/hooks/useVulcanData';
 import { formatDate, getDayOfWeek, formatTime, parseDate, parseTime } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import withAuth from '@/lib/utils/withAuth';
 
-export default function Schedule() {
+function Schedule() {
   const { data: lessons, isLoading, error } = useCurrentWeekData('lessons');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekDays, setWeekDays] = useState<Date[]>([]);
@@ -429,4 +430,6 @@ export default function Schedule() {
       )}
     </DashboardLayout>
   );
-} 
+}
+
+export default withAuth(Schedule); 

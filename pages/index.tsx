@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import AuthModal from '@/components/ui/AuthModal';
-import { isAuthenticated, saveUserData } from '@/lib/utils/auth-utils';
+import { isAuthenticated, saveUserData, getUserData } from '@/lib/utils/auth-utils';
 import { useApiap } from '@/context/ApiapContext';
 
 export default function Home() {
@@ -13,16 +13,18 @@ export default function Home() {
   const { setApiap } = useApiap();
 
   useEffect(() => {
-    // Check if user is already authenticated
-    if (isAuthenticated()) {
-      // If authenticated, redirect to dashboard
+    // Check if all required user data is available
+    const { apiap, name, email } = getUserData();
+    
+    if (apiap && name && email) {
+      // If all data is available, redirect to dashboard
       const redirectTimer = setTimeout(() => {
         router.push('/dashboard');
       }, 1500);
       
       return () => clearTimeout(redirectTimer);
     } else {
-      // If not authenticated, show auth modal after brief delay
+      // If any data is missing, show auth modal after brief delay
       const modalTimer = setTimeout(() => {
         setShowAuthModal(true);
       }, 1000);
@@ -57,8 +59,11 @@ export default function Home() {
         // Update ApiapContext with new APIAP
         setApiap(apiap);
         
-        // Redirect to dashboard
-        router.push('/dashboard');
+        // Redirect to dashboard and reload
+        router.push('/dashboard').then(() => {
+          // Ensure page is completely reloaded to update state
+          window.location.reload();
+        });
       } else {
         console.error('Authentication failed:', data.error);
         setError(data.error || 'Invalid API key. Please check and try again.');

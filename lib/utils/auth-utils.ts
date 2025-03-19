@@ -126,4 +126,20 @@ export const clearUserData = (): void => {
   } catch (error) {
     console.error('Failed to clear user data from localStorage:', error);
   }
+};
+
+// Check if all required user data is present
+export const hasRequiredAuthData = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    const apiap = localStorage.getItem('auth_apiap');
+    const name = localStorage.getItem('auth_name');
+    const email = localStorage.getItem('auth_email');
+    
+    return !!apiap && !!name && !!email;
+  } catch (error) {
+    console.error('Failed to check required auth data:', error);
+    return false;
+  }
 }; 

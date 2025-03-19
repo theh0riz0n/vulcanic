@@ -7,6 +7,7 @@ import { useVulcanData } from '@/lib/hooks/useVulcanData';
 import { formatGrade, getGradeColor } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
 import { Trophy, CaretDown, CaretUp, MagnifyingGlass } from '@phosphor-icons/react';
+import withAuth from '@/lib/utils/withAuth';
 
 // Интерфейс для оценки
 interface Grade {
@@ -38,7 +39,7 @@ interface SubjectWithGrades {
   average: number;
 }
 
-export default function Grades() {
+function Grades() {
   const { data: grades, isLoading, error } = useVulcanData('grades');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortCriteria, setSortCriteria] = useState<'name' | 'average'>('name');
@@ -297,4 +298,6 @@ export default function Grades() {
       )}
     </DashboardLayout>
   );
-} 
+}
+
+export default withAuth(Grades); 

@@ -16,17 +16,21 @@ import {
 import Link from 'next/link';
 import Loading from '@/components/ui/Loading';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
+import withAuth from '@/lib/utils/withAuth';
+import { getUserData } from '@/lib/utils/auth-utils';
 
-export default function Dashboard() {
+function Dashboard() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { data: lessons, isLoading, error } = useCurrentWeekData('lessons');
   const [todaysLessons, setTodaysLessons] = useState<any[]>([]);
   const [greeting, setGreeting] = useState('Good day');
 
-  // User information (in a real app, this should be fetched from API)
+  // Get user information from localStorage
+  const { name, email } = getUserData();
+  // Sample static data
   const userInfo = {
-    name: 'Maksym Morykon',
-    email: 'artemka141008.9@gmail.com',
+    name: name || 'User',
+    email: email || 'user@example.com',
     class: 'ZSE-I',
     school: 'Lodz'
   };
@@ -340,4 +344,6 @@ export default function Dashboard() {
       {renderContent()}
     </DashboardLayout>
   );
-} 
+}
+
+export default withAuth(Dashboard); 

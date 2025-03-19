@@ -14,6 +14,7 @@ import {
   MagnifyingGlass, 
   CalendarCheck 
 } from '@phosphor-icons/react';
+import withAuth from '@/lib/utils/withAuth';
 
 // Интерфейс для домашнего задания
 interface HomeworkItem {
@@ -28,7 +29,7 @@ interface HomeworkItem {
   isTestData?: boolean; // Метка для тестовых данных
 }
 
-export default function Homework() {
+function Homework() {
   const { data: homework, isLoading, error } = useCurrentWeekData('homework');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -295,4 +296,6 @@ export default function Homework() {
       )}
     </DashboardLayout>
   );
-} 
+}
+
+export default withAuth(Homework); 

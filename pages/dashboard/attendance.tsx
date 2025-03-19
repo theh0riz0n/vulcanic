@@ -13,8 +13,9 @@ import {
   ChartPie, 
   Calendar
 } from '@phosphor-icons/react';
+import withAuth from '@/lib/utils/withAuth';
 
-export default function Attendance() {
+function Attendance() {
   // Remove monthly navigation and store only today's date
   const today = useMemo(() => new Date(), []);
   const formattedToday = useMemo(() => {
@@ -444,3 +445,5 @@ export default function Attendance() {
     </DashboardLayout>
   );
 }
+
+export default withAuth(Attendance);
