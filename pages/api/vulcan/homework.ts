@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getHomework } from '@/lib/utils/api-client';
+import { withApiConfig } from '@/lib/utils/api-config';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     console.log("[API DEBUG] Homework API called with query:", req.query);
     const { startDate, endDate } = req.query;
@@ -48,4 +49,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[API DEBUG] Error in homework API:', error);
     return res.status(500).json({ error: 'Error retrieving homework data' });
   }
-} 
+}
+
+export default withApiConfig(handler); 

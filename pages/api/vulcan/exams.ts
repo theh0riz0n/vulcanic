@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getExams } from '@/lib/utils/api-client';
+import { withApiConfig } from '@/lib/utils/api-config';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { startDate, endDate } = req.query;
     
@@ -15,4 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Error in exams API:', error);
     return res.status(500).json({ error: 'Ошибка при получении данных об экзаменах' });
   }
-} 
+}
+
+export default withApiConfig(handler); 

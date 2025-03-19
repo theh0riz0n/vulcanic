@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getGrades } from '@/lib/utils/api-client';
+import { withApiConfig } from '@/lib/utils/api-config';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     console.log("[API DEBUG] Grades API called");
     
@@ -22,4 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[API DEBUG] Error in grades API:', error);
     return res.status(500).json({ error: 'Ошибка при получении данных об оценках' });
   }
-} 
+}
+
+export default withApiConfig(handler); 

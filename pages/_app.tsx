@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { ApiapProvider } from '@/context/ApiapContext';
 
 // Создаем клиент для react-query
 const queryClient = new QueryClient({
@@ -30,9 +31,11 @@ export default function App({ Component, pageProps, router }: AppProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AnimatePresence mode="wait" initial={true}>
-        <Component {...pageProps} key={router.route} />
-      </AnimatePresence>
+      <ApiapProvider>
+        <AnimatePresence mode="wait" initial={true}>
+          <Component {...pageProps} key={router.route} />
+        </AnimatePresence>
+      </ApiapProvider>
     </QueryClientProvider>
   );
 }

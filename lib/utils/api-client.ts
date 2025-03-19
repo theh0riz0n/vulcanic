@@ -3,41 +3,115 @@ let Keypair: any, VulcanJwtRegister: any, VulcanHebeCe: any;
 // Check if we are on the server
 const isServer = typeof window === 'undefined';
 
-if (isServer) {
-  // Import modules only on the server
-  const hebece = require('hebece');
-  Keypair = hebece.Keypair;
-  VulcanJwtRegister = hebece.VulcanJwtRegister;
-  VulcanHebeCe = hebece.VulcanHebeCe;
+// Declare global type for __APIAP__ to fix TypeScript errors
+declare global {
+  var __APIAP__: string | undefined;
 }
 
-// Store APIAP string directly in code for client access
-const APIAP_VULCAN = '<html><head></head><body><input id="ap" type="hidden" value="{&quot;Tokens&quot;:[&quot;eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTWFrc3ltIE1vcnlrb24gKFpTRS1JKSIsInVpZCI6IjNkYzU3ZWQwLTk2NjgtNDAyZS04MmU5LTUzYzBkYTVmOGFiYSIsInRlbmFudCI6ImxvZHoiLCJ1bml0dWlkIjoiNjdiMTA2NDktOWRjZS00NzM4LTlhMzItODhlM2M3YzFlYzg4IiwidXJpIjoiaHR0cHM6Ly91Y3plbi5lZHV2dWxjYW4ucGwvbG9kei9zdGFydD9wcm9maWw9M2RjNTdlZDAtOTY2OC00MDJlLTgyZTktNTNjMGRhNWY4YWJhIiwic2VydmljZSI6IlRydWUiLCJjYXBzIjoiW1wiRURVVlVMQ0FOX1BSRU1JVU1cIl0iLCJuYmYiOjE3NDIxNTM2NDEsImV4cCI6MTc0MjE1NzI0MSwiaWF0IjoxNzQyMTUzNjQxfQ.T6pn5UFokG21_cd0FbZJ84NInbtpfJn6o5vOEO8phbLJ0uQix86ECEXUNSOcpTQUTjhCbKlcsl4tvXMQ1Sx5X-fRdgritrY-bMSuDMKYzMp5KU-eXINZBhAVXDl71caKs_eNeFnpjXor0UL0NutHCKZet8RIlIiA8uEme8xtbYxrKw1ENd7GmDGnUC8jt4mY3gSfhKdP09OwFYqX6IKwUYHvJSCqE6CmzUJ1sw-vTXSg8jKedMbZ0Z6gVtaevadS-JHiL7FN2EZe36ROBOjOP6PXGAdRdLF1OwfbLUqsHdtR2eM61CflovndB6VsJUM4ucmBEmB1O81OtdBt0OjyGQ&quot;],&quot;Alias&quot;:&quot;artemka141008.9@gmail.com&quot;,&quot;Email&quot;:&quot;artemka141008.9@gmail.com&quot;,&quot;EmailCandidate&quot;:null,&quot;GivenName&quot;:null,&quot;Surname&quot;:null,&quot;IsConsentAccepted&quot;:true,&quot;CanAcceptConsent&quot;:true,&quot;AccessToken&quot;:&quot;eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiOTMzMmU5YmYtOGU1ZS00NDVlLTllNzktOTUxYTYzZjdkNzMyIiwiZ3VpZCI6IjVmMWFkNGE0LTU0NTctNDA3OC05MjQxLWFjMWI3OThkYjAxNSIsImh0dHA6Ly9zY2hlbWFzLnZ1bGNhbi5lZHUucGwvd3MvaWRlbnRpdHkvY2xhaW1zL3Byb21ldGV1c3ovYWxpYXMiOiJhcnRlbWthMTQxMDA4LjlAZ21haWwuY29tIiwibmJmIjoxNzQyMTUzNjQxLCJleHAiOjE3NzM2ODk2NDEsImlhdCI6MTc0MjE1MzY0MX0.ZTtfsi57_7D9kUL_RRwKHjZDhFM4VrB-xyhvjevXBVKHeTbvAsb8M11qXPFx8-g5MG-hj-l9DXe95joIt7M_T4gRVk4PlGZ4uChBX5tsKQLDF-tlPL1lU9KIovVCHvxYO0vBkZ8ClqvWfn3QDa361fh9PfRbSj615QDlMZQb0KW1x_2A_8rb6AB7eXJlK-rZKVN4Tefnpm1s7P9PjhHylqTREn5ScIOFaBM9gip2QN26SLzx9U6AMLkl-MPHCYtkip2kv8KeDoDwx0VMdGpY8MvFWJ8HWrQL8a9DdQQ46zgqGTA8BQwhTzgCOtb5qiIk3CDtMjR0QvNC7eTEikcFPA&quot;,&quot;Capabilities&quot;:[&quot;EMAIL_CONFIRMATION&quot;],&quot;Success&quot;:true,&quot;ErrorMessage&quot;:null}"></body></html>';
-
-// Extract JSON data from APIAP
-let jsonData;
-try {
-  const match = APIAP_VULCAN.match(/<input id="ap" type="hidden" value="(.*?)"><\/body>/);
-  if (match && match[1]) {
-    const htmlDecodedJson = match[1].replace(/&quot;/g, '"');
-    jsonData = JSON.parse(htmlDecodedJson);
-  } else {
-    if (isServer) {
-      console.error('Could not extract JSON from APIAP_VULCAN environment variable');
-    } else {
-      console.error('Could not extract JSON from APIAP_VULCAN');
+// Initialize server-side modules
+const initServerModules = async () => {
+  if (isServer) {
+    try {
+      // Using ES modules dynamic import
+      const hebece = await import('hebece');
+      Keypair = hebece.Keypair;
+      VulcanJwtRegister = hebece.VulcanJwtRegister;
+      VulcanHebeCe = hebece.VulcanHebeCe;
+      return true;
+    } catch (err) {
+      console.error('Failed to import hebece module:', err);
+      return false;
     }
-    // Use empty object to avoid errors
-    jsonData = {};
   }
-} catch (error) {
-  console.error('Error parsing APIAP_VULCAN:', error);
-  // Use empty object to avoid errors
-  jsonData = {};
+  return false;
+};
+
+// Initialize server modules
+if (isServer) {
+  initServerModules().catch(err => {
+    console.error('Failed to initialize server modules:', err);
+  });
 }
+
+// Server-side utility to set APIAP globally
+export const setServerSideApiap = (apiapString: string): void => {
+  if (isServer && apiapString) {
+    console.log('Setting server-side APIAP cache');
+    global.__APIAP__ = apiapString;
+  }
+};
+
+// Function to get APIAP string from local storage or return null
+const getApiapString = (): string | null => {
+  if (isServer) {
+    // On server-side, check for the APIAP passed in request
+    if (global.__APIAP__) {
+      console.log('Using server-side cached APIAP');
+      return global.__APIAP__;
+    }
+    console.warn('No APIAP available on server without explicit configuration');
+    return null;
+  }
+  
+  try {
+    // Try to get from localStorage
+    const storedApiap = localStorage.getItem('auth_apiap');
+    if (!storedApiap) return null;
+    
+    // Return the stored APIAP string as is
+    return storedApiap;
+  } catch (error) {
+    console.error('Error accessing localStorage:', error);
+    return null;
+  }
+};
+
+// Get APIAP string
+const APIAP_VULCAN = getApiapString();
+
+// Format the APIAP string for the VulcanJwtRegister
+const formatApiap = (apiapString: string | null): string | null => {
+  if (!apiapString) return null;
+  
+  try {
+    // If it already has HTML structure, use it as is
+    if (apiapString.startsWith('<html>')) {
+      return apiapString;
+    }
+    
+    // Try to parse as JSON if needed
+    let jsonData = {};
+    
+    // If it looks like JSON, parse it
+    if (apiapString.trim().startsWith('{')) {
+      try {
+        jsonData = JSON.parse(apiapString);
+      } catch (e) {
+        console.error('Failed to parse APIAP as JSON:', e);
+      }
+    } else {
+      // Otherwise, try to extract from HTML format
+      const match = apiapString.match(/<input id="ap" type="hidden" value="(.*?)"><\/body>/);
+      if (match && match[1]) {
+        const htmlDecodedJson = match[1].replace(/&quot;/g, '"');
+        try {
+          jsonData = JSON.parse(htmlDecodedJson);
+        } catch (e) {
+          console.error('Failed to parse extracted HTML value as JSON:', e);
+        }
+      }
+    }
+    
+    // Create properly formatted APIAP string
+    return `<html><head></head><body><input id="ap" type="hidden" value='${JSON.stringify(jsonData)}' /></body></html>`;
+  } catch (error) {
+    console.error('Error formatting APIAP string:', error);
+    return null;
+  }
+};
 
 // Create string for VulcanJwtRegister
-const apiap = `<html><head></head><body><input id="ap" type="hidden" value='${JSON.stringify(jsonData)}' /></body></html>`;
+const apiap = formatApiap(APIAP_VULCAN);
 
 // Create stubs for methods that will be used on the client
 const mockData = {
@@ -69,14 +143,47 @@ export const initVulcan = async () => {
     };
   }
   
+  // Try to get APIAP directly from global state
+  const serverApiap = global.__APIAP__;
+  
+  // Debug global state
+  console.log('[API CLIENT] Global state check:',  
+    serverApiap ? `APIAP found with length: ${serverApiap.length}` : 'No APIAP found in global state');
+  
+  if (!serverApiap) {
+    console.error('No valid APIAP string available in global state. Cannot initialize Vulcan API.');
+    // List all global properties for debugging
+    console.log('[API CLIENT] Available global properties:', Object.keys(global).join(', '));
+    throw new Error('No valid API key found. Please authenticate first.');
+  }
+  
   try {
+    // Make sure modules are initialized
+    if (!Keypair || !VulcanJwtRegister || !VulcanHebeCe) {
+      console.log('[API CLIENT] Initializing server modules...');
+      const initialized = await initServerModules();
+      if (!initialized) {
+        throw new Error('Failed to initialize required modules');
+      }
+    }
+    
+    console.log('[API CLIENT] Using server-side cached APIAP for API initialization...');
+    
     const keypair = await (new Keypair()).init();
-    const jwt = await (new VulcanJwtRegister(keypair, apiap, 0)).init();
+    console.log('[API CLIENT] Keypair initialized, creating JWT register with APIAP...');
+    
+    const jwt = await (new VulcanJwtRegister(keypair, serverApiap, 0)).init();
+    console.log('[API CLIENT] JWT register successful, RestURL:', jwt.Envelope.RestURL);
+    
     const hebe = new VulcanHebeCe(keypair, jwt.Envelope.RestURL);
+    console.log('[API CLIENT] Connecting HebeCe...');
+    
     await hebe.connect();
+    console.log('[API CLIENT] HebeCe connected successfully');
+    
     return hebe;
   } catch (error) {
-    console.error('Failed to initialize Vulcan API:', error);
+    console.error('[API CLIENT] Failed to initialize Vulcan API:', error);
     throw new Error('Failed to connect to Vulcan API');
   }
 };

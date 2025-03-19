@@ -1,9 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getLessons } from '@/lib/utils/api-client';
+import { withApiConfig } from '@/lib/utils/api-config';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     console.log("[API DEBUG] Lessons API called with query:", req.query);
+    
+    // Debug global state directly
+    console.log("[API DEBUG] Checking global APIAP state:", 
+      global.__APIAP__ ? `Found with length ${global.__APIAP__.length}` : "Not found");
+    
     const { startDate, endDate } = req.query;
     
     if (!startDate || !endDate) {
@@ -28,4 +34,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[API DEBUG] Error in lessons API:', error);
     return res.status(500).json({ error: 'Ошибка при получении данных о расписании' });
   }
-} 
+}
+
+export default withApiConfig(handler); 

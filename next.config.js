@@ -18,16 +18,40 @@ const nextConfig = {
   
   // Add configuration to resolve issues with fs and other Node.js modules
   webpack: (config, { isServer }) => {
-    // If we are on the client (not server), replace fs and other node modules with empty stubs
+    // Fixing node: scheme imports
     if (!isServer) {
+      // Don't attempt to import node modules on the client side
       config.resolve.fallback = {
+        ...config.resolve.fallback,
         fs: false,
-        path: false,
+        net: false,
+        tls: false,
+        http: false,
+        https: false,
         crypto: false,
-        os: false,
         stream: false,
-        child_process: false,
+        buffer: false,
+        zlib: false,
+        path: false,
+        os: false,
+        util: false,
       };
+      
+      // Replace hebece with an empty module on the client side
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        hebece: false,
+      };
+    }
+    
+    // Ensure server-only code doesn't leak into client bundles
+    if (!isServer) {
+      // Mark certain files as external to prevent bundling them in the client
+      config.externals = [
+        ...config.externals || [],
+        'hebece',
+        'node-fetch'
+      ];
     }
     
     return config;
