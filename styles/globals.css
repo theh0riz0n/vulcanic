@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 249, 250, 251;
+  --background-rgb: 17, 24, 39;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: 'Inter', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.card {
+  @apply bg-surface rounded-xl shadow-card overflow-hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  @apply shadow-elevation;
+  transform: translateY(-2px);
+}
+
+.nav-item {
+  @apply flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200;
+}
+
+.nav-item.active {
+  @apply text-primary bg-overlay/30;
+}
+
+.nav-item:not(.active):hover {
+  @apply bg-overlay/20 text-text-primary;
+}
+
+.blur-backdrop {
+  @apply backdrop-blur-md bg-background/80;
+}
+
+/* Animations */
+.fade-in {
+  @apply animate-fade-in;
+}
+
+.slide-up {
+  @apply animate-slide-up;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-overlay rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/50;
+} 

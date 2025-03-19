@@ -1,0 +1,343 @@
+import React, { useState, useEffect } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import Card from '@/components/ui/Card';
+import { useCurrentWeekData } from '@/lib/hooks/useVulcanData';
+import { formatDate, getDayOfWeek, formatTime } from '@/lib/utils/formatters';
+import { motion } from 'framer-motion';
+import { 
+  Calendar, 
+  GraduationCap, 
+  ClockCounterClockwise, 
+  Notepad,
+  Envelope,
+  BookOpen,
+  Building
+} from '@phosphor-icons/react';
+import Link from 'next/link';
+import Loading from '@/components/ui/Loading';
+import ErrorDisplay from '@/components/ui/ErrorDisplay';
+
+export default function Dashboard() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const { data: lessons, isLoading, error } = useCurrentWeekData('lessons');
+  const [todaysLessons, setTodaysLessons] = useState<any[]>([]);
+  const [greeting, setGreeting] = useState('Good day');
+
+  // User information (in a real app, this should be fetched from API)
+  const userInfo = {
+    name: 'Maksym Morykon',
+    email: 'artemka141008.9@gmail.com',
+    class: 'ZSE-I',
+    school: 'Lodz'
+  };
+
+  useEffect(() => {
+    // Update greeting based on time of day
+    const hour = currentDate.getHours();
+    if (hour < 6) setGreeting('Good night');
+    else if (hour < 12) setGreeting('Good morning');
+    else if (hour < 18) setGreeting('Good day');
+    else setGreeting('Good evening');
+
+    // Update clock every minute
+    const timer = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (lessons && lessons.length > 0) {
+      // Get today's date in local timezone format (YYYY-MM-DD)
+      const todayObj = new Date();
+      const todayYear = todayObj.getFullYear();
+      const todayMonth = String(todayObj.getMonth() + 1).padStart(2, '0');
+      const todayDay = String(todayObj.getDate()).padStart(2, '0');
+      const today = `${todayYear}-${todayMonth}-${todayDay}`;
+      
+      console.log('[DEBUG] Today\'s date for filtering:', today);
+      
+      const filtered = lessons.filter(lesson => {
+        // Check date format from API
+        let lessonDate = null;
+        
+        if (lesson.Date) {
+          // If it's an object with Timestamp (Vulcan API format)
+          if (lesson.Date.Timestamp) {
+            // Convert timestamp to local date string (YYYY-MM-DD)
+            const date = new Date(lesson.Date.Timestamp);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            lessonDate = `${year}-${month}-${day}`;
+          } 
+          // If it's an object with Date (Vulcan API format)
+          else if (lesson.Date.Date) {
+            lessonDate = lesson.Date.Date;
+          }
+          // If it's a date string in YYYY-MM-DD format
+          else if (lesson.Date.DateDisplay) {
+            // Convert from DD.MM.YYYY to YYYY-MM-DD
+            const parts = lesson.Date.DateDisplay.split('.');
+            if (parts.length === 3) {
+              lessonDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+          }
+          // If it's an object in another format
+          else if (typeof lesson.Date === 'object') {
+            try {
+              // Try to extract year, month and day
+              const year = lesson.Date.Year || lesson.Date.year;
+              const month = (lesson.Date.Month || lesson.Date.month);
+              const day = lesson.Date.Day || lesson.Date.day;
+              
+              if (year && month !== undefined && day) {
+                lessonDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              }
+            } catch (e) {
+              console.error('Failed to parse lesson date:', e);
+              return false; // Skip this lesson
+            }
+          }
+        } 
+        // If Date is a string
+        else if (typeof lesson.Date === 'string') {
+          lessonDate = lesson.Date.split('T')[0];
+        }
+        
+        console.log(`[DEBUG] Lesson date: ${lessonDate}, comparing with today: ${today}`);
+        return lessonDate === today;
+      });
+      
+      console.log(`[DEBUG] Filtered ${filtered.length} lessons for today:`, filtered);
+      
+      // Sort by time
+      const sorted = filtered.sort((a, b) => {
+        // Convert lesson start time to Date object for comparison
+        let timeA, timeB;
+        
+        try {
+          // Process TimeSlot in Vulcan API format
+          if (a.TimeSlot && a.TimeSlot.Start) {
+            const [hourA, minuteA] = a.TimeSlot.Start.split(':').map(Number);
+            timeA = new Date(0, 0, 0, hourA || 0, minuteA || 0);
+          } 
+          // Other time formats
+          else if (a.TimeStart) {
+            if (typeof a.TimeStart === 'string') {
+              timeA = new Date(a.TimeStart);
+            } else if (a.TimeStart && a.TimeStart.Hour !== undefined) {
+              timeA = new Date(0, 0, 0, a.TimeStart.Hour, a.TimeStart.Minute || 0);
+            } else {
+              timeA = new Date();
+            }
+          } else {
+            timeA = new Date();
+          }
+          
+          // Process TimeSlot in Vulcan API format
+          if (b.TimeSlot && b.TimeSlot.Start) {
+            const [hourB, minuteB] = b.TimeSlot.Start.split(':').map(Number);
+            timeB = new Date(0, 0, 0, hourB || 0, minuteB || 0);
+          }
+          // Other time formats
+          else if (b.TimeStart) {
+            if (typeof b.TimeStart === 'string') {
+              timeB = new Date(b.TimeStart);
+            } else if (b.TimeStart && b.TimeStart.Hour !== undefined) {
+              timeB = new Date(0, 0, 0, b.TimeStart.Hour, b.TimeStart.Minute || 0);
+            } else {
+              timeB = new Date();
+            }
+          } else {
+            timeB = new Date();
+          }
+        } catch (e) {
+          console.error('Error parsing lesson time:', e);
+          return 0;
+        }
+        
+        return timeA.getTime() - timeB.getTime();
+      });
+      
+      // Add current lesson information
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      const mappedLessons = sorted.map(lesson => {
+        // Check if this lesson is currently happening
+        let isCurrentLesson = false;
+        
+        // Parse start and end times
+        let startHour = 0, startMinute = 0, endHour = 0, endMinute = 0;
+        
+        if (lesson.TimeSlot) {
+          if (lesson.TimeSlot.Start && lesson.TimeSlot.End) {
+            const startParts = lesson.TimeSlot.Start.split(':').map(Number);
+            const endParts = lesson.TimeSlot.End.split(':').map(Number);
+            
+            startHour = startParts[0] || 0;
+            startMinute = startParts[1] || 0;
+            endHour = endParts[0] || 0;
+            endMinute = endParts[1] || 0;
+          }
+        } else if (lesson.TimeStart && lesson.TimeEnd) {
+          if (typeof lesson.TimeStart === 'string' && typeof lesson.TimeEnd === 'string') {
+            const startDate = new Date(lesson.TimeStart);
+            const endDate = new Date(lesson.TimeEnd);
+            
+            startHour = startDate.getHours();
+            startMinute = startDate.getMinutes();
+            endHour = endDate.getHours();
+            endMinute = endDate.getMinutes();
+          } else if (lesson.TimeStart.Hour !== undefined && lesson.TimeEnd.Hour !== undefined) {
+            startHour = lesson.TimeStart.Hour || 0;
+            startMinute = lesson.TimeStart.Minute || 0;
+            endHour = lesson.TimeEnd.Hour || 0;
+            endMinute = lesson.TimeEnd.Minute || 0;
+          }
+        }
+        
+        // Convert all times to minutes for easier comparison
+        const startTimeInMinutes = startHour * 60 + startMinute;
+        const endTimeInMinutes = endHour * 60 + endMinute;
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+        
+        // Check if current time is between start and end
+        isCurrentLesson = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+        
+        return {
+          ...lesson,
+          isCurrentLesson
+        };
+      });
+      
+      setTodaysLessons(mappedLessons);
+    }
+  }, [lessons, currentDate]); // Added currentDate to dependencies to update active lesson
+
+  const quickLinks = [
+    { title: 'Schedule', icon: Calendar, color: 'bg-accent', href: '/dashboard/schedule' },
+    { title: 'Grades', icon: GraduationCap, color: 'bg-primary', href: '/dashboard/grades' },
+    { title: 'Attendance', icon: ClockCounterClockwise, color: 'bg-secondary', href: '/dashboard/attendance' },
+    { title: 'Homework', icon: Notepad, color: 'bg-green-500', href: '/dashboard/homework' }
+  ];
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <Loading text="Loading schedule..." />;
+    }
+
+    if (error) {
+      return <ErrorDisplay message={error.message} />;
+    }
+
+    return (
+      <>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6"
+        >
+          <Card className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold">
+                {userInfo.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              
+              <div className="flex-1">
+                <Link href="/dashboard/profile">
+                  <h2 className="text-lg font-bold">{userInfo.name}</h2>
+                </Link>
+                <div className="text-text-secondary text-xs space-y-1">
+                  <div className="flex items-center">
+                    <BookOpen size={12} className="mr-1" />
+                    <span>Class {userInfo.class}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Building size={12} className="mr-1" />
+                    <span>{userInfo.school}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+        
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {quickLinks.map((link, index) => (
+            <Link href={link.href} key={index} onClick={(e) => {
+              e.preventDefault();
+              window.location.href = link.href;
+            }}>
+              <Card className="p-4">
+                <div className={`w-10 h-10 rounded-full ${link.color} flex items-center justify-center mb-3`}>
+                  <link.icon size={24} weight="bold" className="text-white" />
+                </div>
+                <h3 className="font-medium">{link.title}</h3>
+              </Card>
+            </Link>
+          ))}
+        </div>
+
+        <h2 className="text-xl font-mono font-bold mb-4">Today</h2>
+        
+        {todaysLessons.length > 0 ? (
+          <div className="space-y-3">
+            {todaysLessons.map((lesson, index) => (
+              <Card 
+                key={index} 
+                className={`p-4 ${lesson.isCurrentLesson ? 'border-2 border-accent' : ''}`}
+                withHover={false}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium text-text-primary">
+                      {lesson.Subject?.Name || lesson.Subject || 'Lesson'}
+                    </h3>
+                    <p className="text-sm text-text-secondary">
+                      {lesson.Room?.Code ? `Room: ${lesson.Room.Code}` : (lesson.Room ? `Room: ${lesson.Room}` : '')}
+                      {lesson.TeacherPrimary?.DisplayName ? ` • ${lesson.TeacherPrimary.DisplayName}` : 
+                       (lesson.Teacher ? ` • ${lesson.Teacher}` : '')}
+                    </p>
+                  </div>
+                  <div className="bg-surface px-3 py-1 rounded-full text-text-secondary text-sm">
+                    {lesson.TimeSlot?.Display || 
+                     (lesson.TimeStart && lesson.TimeEnd ? `${formatTime(lesson.TimeStart)} - ${formatTime(lesson.TimeEnd)}` : 
+                      (lesson.TimeSlot ? `${lesson.TimeSlot.Start} - ${lesson.TimeSlot.End}` : 'Time not specified'))}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="p-6 text-center" withHover={false}>
+            <p className="text-text-secondary">No lessons for today</p>
+          </Card>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-2xl font-bold mb-1">{greeting}!</h1>
+          <p className="text-text-secondary">
+            {formatDate(currentDate, 'EEEE, d MMMM')}
+          </p>
+        </motion.div>
+      </div>
+
+      {renderContent()}
+    </DashboardLayout>
+  );
+} 
