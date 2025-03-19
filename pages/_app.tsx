@@ -1,6 +1,8 @@
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
 import { AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Создаем клиент для react-query
@@ -14,6 +16,18 @@ const queryClient = new QueryClient({
 });
 
 export default function App({ Component, pageProps, router }: AppProps) {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, (err) => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AnimatePresence mode="wait" initial={true}>
@@ -21,4 +35,4 @@ export default function App({ Component, pageProps, router }: AppProps) {
       </AnimatePresence>
     </QueryClientProvider>
   );
-} 
+}
