@@ -96,6 +96,23 @@ export default function Profile() {
           </Card>
         </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="p-6">
+            <h3 className="text-lg font-bold mb-4">pedal ↓</h3>
+            <div className="flex justify-center">
+              <img 
+                src="/images/pedal.png" 
+                alt="Pedal arrow down" 
+                className="max-w-full h-auto rounded-lg opacity-80 hover:opacity-100 transition-opacity"
+              />
+            </div>
+          </Card>
+        </motion.div>
+
         <div className="text-center text-text-secondary text-xs mt-8 mb-4">
           <p>Dark Tide © 2025</p>
           <p className="mt-1">Made with ♥ for students</p>
