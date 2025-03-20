@@ -11,8 +11,21 @@ export const withApiConfig = (
 ) => {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
-      // Get APIAP from request headers if available
-      const apiapFromHeader = req.headers['x-apiap'] as string;
+      // Create a case-insensitive lookup for headers
+      let apiapFromHeader: string | undefined;
+      
+      // Look for the x-apiap header regardless of case
+      for (const key of Object.keys(req.headers)) {
+        if (key.toLowerCase() === 'x-apiap') {
+          // Handle header value which could be string, string[] or undefined
+          const headerValue = req.headers[key];
+          if (headerValue !== undefined) {
+            // Take the first value if it's an array, or use as is if it's a string
+            apiapFromHeader = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+          }
+          break;
+        }
+      }
       
       // If APIAP was passed in header, use it
       if (apiapFromHeader) {
@@ -24,6 +37,7 @@ export const withApiConfig = (
           console.log('[API CONFIG] Using existing server-side APIAP cache with length:', global.__APIAP__.length);
         } else {
           console.log('[API CONFIG] No APIAP available in headers or global state');
+          console.log('[API CONFIG] Available headers:', Object.keys(req.headers).join(', '));
         }
       }
       
