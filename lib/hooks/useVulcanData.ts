@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useApiap } from '@/context/ApiapContext';
 
 type DateRange = {
   startDate: string;
@@ -10,9 +11,15 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const { refreshApiap } = useApiap();
 
   useEffect(() => {
-    const fetchData = async () => {
+    let isMounted = true;
+    let cancelTokenSource = axios.CancelToken.source();
+    
+    const fetchData = async (retry = false) => {
+      if (!isMounted) return;
+      
       setIsLoading(true);
       setError(null);
       
@@ -25,34 +32,44 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
             if (!dateRange) throw new Error('Date range is required for lessons');
             apiUrl = `/api/vulcan/lessons?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
             console.log(`[DEBUG] Fetching lessons: ${apiUrl}`);
-            response = await axios.get(apiUrl);
+            response = await axios.get(apiUrl, {
+              cancelToken: cancelTokenSource.token
+            });
             break;
             
           case 'exams':
             if (!dateRange) throw new Error('Date range is required for exams');
             apiUrl = `/api/vulcan/exams?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
             console.log(`[DEBUG] Fetching exams: ${apiUrl}`);
-            response = await axios.get(apiUrl);
+            response = await axios.get(apiUrl, {
+              cancelToken: cancelTokenSource.token
+            });
             break;
             
           case 'attendance':
             if (!dateRange) throw new Error('Date range is required for attendance');
             apiUrl = `/api/vulcan/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
             console.log(`[DEBUG] Fetching attendance: ${apiUrl}`);
-            response = await axios.get(apiUrl);
+            response = await axios.get(apiUrl, {
+              cancelToken: cancelTokenSource.token
+            });
             break;
             
           case 'grades':
             apiUrl = '/api/vulcan/grades';
             console.log(`[DEBUG] Fetching grades: ${apiUrl}`);
-            response = await axios.get(apiUrl);
+            response = await axios.get(apiUrl, {
+              cancelToken: cancelTokenSource.token
+            });
             break;
             
           case 'homework':
             if (!dateRange) throw new Error('Date range is required for homework');
             apiUrl = `/api/vulcan/homework?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
             console.log(`[DEBUG] Fetching homework: ${apiUrl}`);
-            response = await axios.get(apiUrl);
+            response = await axios.get(apiUrl, {
+              cancelToken: cancelTokenSource.token
+            });
             break;
             
           default:
@@ -73,14 +90,52 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
       } catch (err: any) {
         console.error(`[DEBUG] Error fetching ${type} data:`, err);
         console.error(`[DEBUG] Error details:`, err.response?.data || err.message);
-        setError(new Error(err.response?.data?.error || err.message || `Failed to fetch ${type} data`));
+        
+        // Check if error is due to invalid API key or authentication
+        const errorMessage = err.response?.data?.error || err.message || '';
+        const isApiKeyError = 
+          errorMessage.includes('API key') || 
+          errorMessage.includes('APIAP') || 
+          errorMessage.includes('authenticate') || 
+          errorMessage.includes('auth') ||
+          (err.response?.status === 401);
+        
+        // If API key error and not already retrying, try to refresh the APIAP
+        if (isApiKeyError && !retry) {
+          console.log('[DEBUG] Authentication error detected, attempting to refresh APIAP...');
+          try {
+            const refreshed = await refreshApiap();
+            if (refreshed) {
+              console.log('[DEBUG] APIAP refreshed successfully, retrying API call...');
+              // Retry the API call with the refreshed token
+              return fetchData(true);
+            } else {
+              console.error('[DEBUG] Failed to refresh APIAP');
+              setError(new Error('Your authentication has expired. Please log out and log in again.'));
+            }
+          } catch (refreshError) {
+            console.error('[DEBUG] Error during APIAP refresh:', refreshError);
+            setError(new Error('Your authentication has expired. Please log out and log in again.'));
+          }
+        } else {
+          setError(new Error(errorMessage || `Failed to fetch ${type} data`));
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchData();
-  }, [type, dateRange?.startDate, dateRange?.endDate]);
+    
+    return () => {
+      isMounted = false;
+      // Cancel any in-flight requests when component unmounts
+      cancelTokenSource.cancel('Component unmounted');
+      console.log(`[DEBUG] Canceled ${type} data requests due to component unmount`);
+    };
+  }, [type, dateRange?.startDate, dateRange?.endDate, refreshApiap]);
 
   return { data, isLoading, error };
 };

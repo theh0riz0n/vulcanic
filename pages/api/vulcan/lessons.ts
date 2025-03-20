@@ -6,9 +6,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     console.log("[API DEBUG] Lessons API called with query:", req.query);
     
-    // Debug global state directly
-    console.log("[API DEBUG] Checking global APIAP state:", 
-      global.__APIAP__ ? `Found with length ${global.__APIAP__.length}` : "Not found");
+    // Debug global state and process.env APIAP state for debugging
+    console.log("[API DEBUG] Checking APIAP states:", {
+      globalState: global.__APIAP__ ? `Found with length ${global.__APIAP__.length}` : "Not found",
+      processEnvState: process.env.RUNTIME_APIAP ? `Found with length ${process.env.RUNTIME_APIAP.length}` : "Not found"
+    });
     
     const { startDate, endDate } = req.query;
     
@@ -17,22 +19,73 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'Требуются параметры startDate и endDate' });
     }
     
-    console.log(`[API DEBUG] Fetching lessons for date range: ${startDate} to ${endDate}`);
-    const lessons = await getLessons(startDate as string, endDate as string);
+    // Implement retry logic for API requests
+    let attempts = 0;
+    const maxAttempts = 2;
+    let lastError = null;
     
-    if (lessons && Array.isArray(lessons)) {
-      console.log(`[API DEBUG] Received ${lessons.length} lessons`);
-      if (lessons.length > 0) {
-        console.log("[API DEBUG] Sample lesson:", lessons[0]);
+    while (attempts < maxAttempts) {
+      try {
+        console.log(`[API DEBUG] Fetching lessons for date range: ${startDate} to ${endDate} (Attempt ${attempts + 1}/${maxAttempts})`);
+        const lessons = await getLessons(startDate as string, endDate as string);
+        
+        if (lessons && Array.isArray(lessons)) {
+          console.log(`[API DEBUG] Received ${lessons.length} lessons`);
+          if (lessons.length > 0) {
+            console.log("[API DEBUG] Sample lesson:", lessons[0]);
+          }
+        } else {
+          console.log("[API DEBUG] Unexpected response format:", lessons);
+        }
+        
+        return res.status(200).json(lessons);
+      } catch (error) {
+        lastError = error;
+        console.error(`[API DEBUG] Error in lessons API (Attempt ${attempts + 1}/${maxAttempts}):`, error);
+        
+        // Check if error is related to API key issues
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isApiKeyError = 
+          errorMessage.includes('No valid API key') || 
+          errorMessage.includes('API key not found') || 
+          errorMessage.includes('Failed to connect to Vulcan API');
+        
+        if (isApiKeyError) {
+          console.log('[API DEBUG] API key error detected, retrying with fresh global/process state sync');
+          
+          // If we have process.env APIAP but not global, sync them
+          if (!global.__APIAP__ && process.env.RUNTIME_APIAP) {
+            console.log('[API DEBUG] Restoring global.__APIAP__ from process.env.RUNTIME_APIAP');
+            global.__APIAP__ = process.env.RUNTIME_APIAP;
+          }
+          
+          // If we have global APIAP but not process.env, sync them
+          if (global.__APIAP__ && !process.env.RUNTIME_APIAP) {
+            console.log('[API DEBUG] Restoring process.env.RUNTIME_APIAP from global.__APIAP__');
+            process.env.RUNTIME_APIAP = global.__APIAP__;
+          }
+        }
+        
+        attempts++;
+        
+        // If this is not the last attempt, wait 1 second before retrying
+        if (attempts < maxAttempts) {
+          console.log('[API DEBUG] Waiting 1 second before retry...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-    } else {
-      console.log("[API DEBUG] Unexpected response format:", lessons);
     }
     
-    return res.status(200).json(lessons);
+    // If we've exhausted retries, return the last error
+    console.error('[API DEBUG] All retry attempts failed');
+    return res.status(500).json({ 
+      error: 'Ошибка при получении данных о расписании. Пожалуйста, выйдите из системы и войдите снова.' 
+    });
   } catch (error) {
-    console.error('[API DEBUG] Error in lessons API:', error);
-    return res.status(500).json({ error: 'Ошибка при получении данных о расписании' });
+    console.error('[API DEBUG] Unhandled error in lessons API:', error);
+    return res.status(500).json({ 
+      error: 'Ошибка при получении данных о расписании. Пожалуйста, попробуйте еще раз.' 
+    });
   }
 }
 

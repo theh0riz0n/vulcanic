@@ -65,20 +65,34 @@ export const withApiConfig = (
           // Format and validate the APIAP string
           const formattedApiap = formatApiap(apiapFromHeader);
           console.log('[API CONFIG] Successfully formatted APIAP string');
+          // Store in both global and process.env
           global.__APIAP__ = formattedApiap;
+          process.env.RUNTIME_APIAP = formattedApiap;
+          console.log('[API CONFIG] APIAP stored in both global and process.env');
         } catch (error) {
           console.error('[API CONFIG] Failed to process APIAP from header:', error);
           return res.status(401).json({ error: 'Invalid APIAP string format' });
         }
       } else {
-        // Check if we already have a server-side APIAP cache
+        // Check multiple sources for APIAP in this priority: global, process.env
         if (global.__APIAP__) {
-          console.log('[API CONFIG] Using existing server-side APIAP cache with length:', global.__APIAP__.length);
+          console.log('[API CONFIG] Using existing server-side APIAP from global state with length:', global.__APIAP__.length);
+          // Ensure process.env is synced with global
+          process.env.RUNTIME_APIAP = global.__APIAP__;
+        } else if (process.env.RUNTIME_APIAP) {
+          console.log('[API CONFIG] Using existing server-side APIAP from process.env with length:', process.env.RUNTIME_APIAP.length);
+          // Sync global with process.env
+          global.__APIAP__ = process.env.RUNTIME_APIAP;
         } else {
-          console.log('[API CONFIG] No APIAP available in headers or global state');
+          console.log('[API CONFIG] No APIAP available in headers, global state, or process.env');
           console.log('[API CONFIG] Available headers:', Object.keys(req.headers).join(', '));
           return res.status(401).json({ error: 'No valid API key found. Please authenticate first.' });
         }
+      }
+      
+      // Always call setServerSideApiap to ensure all sources are synced
+      if (global.__APIAP__) {
+        setServerSideApiap(global.__APIAP__);
       }
       
       // Call the original handler

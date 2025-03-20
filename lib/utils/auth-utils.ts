@@ -59,9 +59,10 @@ export const validateApiap = async (apiapString: string): Promise<boolean> => {
     const hebe = new VulcanHebeCe(keypair, jwt.Envelope.RestURL);
     await hebe.connect();
     
-    // Store the validated APIAP in global state for server-side use
+    // Store the validated APIAP in both global state and process.env for server-side use
     global.__APIAP__ = formattedApiap;
-    console.log('APIAP stored in server-side global state with length:', formattedApiap.length);
+    process.env.RUNTIME_APIAP = formattedApiap;
+    console.log('APIAP stored in server-side global state and process.env with length:', formattedApiap.length);
     
     return true;
   } catch (error) {

@@ -6,6 +6,11 @@ const isServer = typeof window === 'undefined';
 // Declare global type for __APIAP__ to fix TypeScript errors
 declare global {
   var __APIAP__: string | undefined;
+  namespace NodeJS {
+    interface ProcessEnv {
+      RUNTIME_APIAP?: string;
+    }
+  }
 }
 
 // Initialize server-side modules
@@ -33,22 +38,36 @@ if (isServer) {
   });
 }
 
-// Server-side utility to set APIAP globally
+// Server-side utility to set APIAP globally and in process.env for persistence
 export const setServerSideApiap = (apiapString: string): void => {
   if (isServer && apiapString) {
     console.log('Setting server-side APIAP cache');
+    // Store in both global and process.env for redundancy
     global.__APIAP__ = apiapString;
+    process.env.RUNTIME_APIAP = apiapString;
+    console.log('APIAP stored in both global state and process.env');
   }
 };
 
-// Function to get APIAP string from local storage or return null
+// Function to get APIAP string from process.env, global state, local storage, or return null
 const getApiapString = (): string | null => {
   if (isServer) {
-    // On server-side, check for the APIAP passed in request
+    // On server-side, first check process.env for persistence across cold starts
+    if (process.env.RUNTIME_APIAP) {
+      console.log('Using APIAP from process.env');
+      // Also update global state to ensure consistency
+      global.__APIAP__ = process.env.RUNTIME_APIAP;
+      return process.env.RUNTIME_APIAP;
+    }
+    
+    // Then check global state as fallback
     if (global.__APIAP__) {
-      console.log('Using server-side cached APIAP');
+      console.log('Using server-side cached APIAP from global state');
+      // Store in process.env for future cold starts
+      process.env.RUNTIME_APIAP = global.__APIAP__;
       return global.__APIAP__;
     }
+    
     console.warn('No APIAP available on server without explicit configuration');
     return null;
   }
@@ -143,15 +162,15 @@ export const initVulcan = async () => {
     };
   }
   
-  // Try to get APIAP directly from global state
-  const serverApiap = global.__APIAP__;
+  // Try to get APIAP from process.env first, then global state
+  let serverApiap = process.env.RUNTIME_APIAP || global.__APIAP__;
   
   // Debug global state
-  console.log('[API CLIENT] Global state check:',  
-    serverApiap ? `APIAP found with length: ${serverApiap.length}` : 'No APIAP found in global state');
+  console.log('[API CLIENT] APIAP state check:',  
+    serverApiap ? `APIAP found with length: ${serverApiap.length}` : 'No APIAP found in available state');
   
   if (!serverApiap) {
-    console.error('No valid APIAP string available in global state. Cannot initialize Vulcan API.');
+    console.error('No valid APIAP string available. Cannot initialize Vulcan API.');
     // List all global properties for debugging
     console.log('[API CLIENT] Available global properties:', Object.keys(global).join(', '));
     throw new Error('No valid API key found. Please authenticate first.');
@@ -167,7 +186,7 @@ export const initVulcan = async () => {
       }
     }
     
-    console.log('[API CLIENT] Using server-side cached APIAP for API initialization...');
+    console.log('[API CLIENT] Using server-side APIAP for API initialization...');
     
     const keypair = await (new Keypair()).init();
     console.log('[API CLIENT] Keypair initialized, creating JWT register with APIAP...');
@@ -180,6 +199,10 @@ export const initVulcan = async () => {
     
     await hebe.connect();
     console.log('[API CLIENT] HebeCe connected successfully');
+    
+    // Ensure global and process.env are in sync
+    global.__APIAP__ = serverApiap;
+    process.env.RUNTIME_APIAP = serverApiap;
     
     return hebe;
   } catch (error) {

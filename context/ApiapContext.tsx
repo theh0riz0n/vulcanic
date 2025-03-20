@@ -11,6 +11,7 @@ interface ApiapContextType {
   setApiap: (apiap: string) => void;
   clearApiap: () => void;
   getAuthHeaders: () => Record<string, string>;
+  refreshApiap: () => Promise<boolean>;
 }
 
 const ApiapContext = createContext<ApiapContextType | undefined>(undefined);
@@ -39,8 +40,68 @@ export const ApiapProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Clear APIAP from state and localStorage
   const clearApiap = () => {
     console.log('ApiapContext: Clearing APIAP');
+    
+    // Clear component state
     setApiapState(null);
+    
+    // Clear global APIAP if we're in a server environment (shouldn't happen client-side, but just in case)
+    try {
+      if (typeof global !== 'undefined' && global.__APIAP__) {
+        console.log('ApiapContext: Clearing global.__APIAP__');
+        global.__APIAP__ = undefined;
+      }
+      
+      // Clear any potential cache properties that might be set on window
+      // Use type-safe approach to avoid TypeScript errors
+      if (typeof window !== 'undefined') {
+        // Use bracket notation and 'any' type to bypass TypeScript property checking
+        const win = window as any;
+        if (win.__vulcan_headers_cache) {
+          console.log('ApiapContext: Clearing cached headers');
+          delete win.__vulcan_headers_cache;
+        }
+      }
+    } catch (err) {
+      console.error('ApiapContext: Error during APIAP cleanup:', err);
+    }
+    
     // Note: We don't clear localStorage here as clearUserData would handle this
+  };
+
+  // Refresh APIAP on the server-side by sending it back for validation
+  const refreshApiap = async (): Promise<boolean> => {
+    console.log('ApiapContext: Attempting to refresh APIAP validation on the server');
+    
+    // Get the current APIAP from state or localStorage
+    const currentApiap = apiap || getUserData()?.apiap;
+    
+    if (!currentApiap) {
+      console.error('ApiapContext: Cannot refresh APIAP - No APIAP available');
+      return false;
+    }
+    
+    try {
+      // Re-validate the APIAP with the server
+      const response = await fetch('/api/validate-apiap', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ apiap: currentApiap })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('ApiapContext: Failed to refresh APIAP:', error);
+        return false;
+      }
+      
+      console.log('ApiapContext: Successfully refreshed APIAP validation on the server');
+      return true;
+    } catch (error) {
+      console.error('ApiapContext: Error refreshing APIAP:', error);
+      return false;
+    }
   };
 
   // Get headers with APIAP for API requests
@@ -99,7 +160,7 @@ export const ApiapProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ApiapContext.Provider value={{ apiap, setApiap, clearApiap, getAuthHeaders }}>
+    <ApiapContext.Provider value={{ apiap, setApiap, clearApiap, getAuthHeaders, refreshApiap }}>
       {children}
     </ApiapContext.Provider>
   );

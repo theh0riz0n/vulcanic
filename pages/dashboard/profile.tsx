@@ -20,11 +20,13 @@ import { useRouter } from 'next/router';
 import withAuth from '@/lib/utils/withAuth';
 import { getUserData, clearUserData } from '@/lib/utils/auth-utils';
 import { useSnowflakes } from '@/context/SnowflakesContext';
+import { useApiap } from '@/context/ApiapContext';
 
 function Profile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
+  const { clearApiap } = useApiap();
   
   // Get user data from localStorage
   const { name, email } = getUserData();
@@ -40,18 +42,22 @@ function Profile() {
   };
 
   const handleLogout = () => {
-    setIsLoggingOut(true);
-    
-    // Clear user data from localStorage
-    clearUserData();
-    
-    // Delay redirect slightly for animation
-    setTimeout(() => {
-      router.push('/').then(() => {
-        // Reload the page after redirect
-        window.location.reload();
-      });
-    }, 500);
+    try {
+      setIsLoggingOut(true);
+      
+      // First clear the APIAP context to release memory
+      clearApiap();
+      
+      // Then clear localStorage
+      clearUserData();
+      
+      // Simple redirect instead of the complex approach
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Fallback if the normal logout fails
+      window.location.href = '/';
+    }
   };
 
   return (
