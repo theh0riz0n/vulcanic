@@ -7,6 +7,7 @@
 - [ ] updates on dashboard
 - [ ] push notifications
 - [ ] more ui customization
+- [ ] details menus
 
 ## features
 
