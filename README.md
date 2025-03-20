@@ -1,52 +1,45 @@
-# Dark Tide - Электронный дневник
+# darktide - custom client for eduvulcan
 
-Современный электронный дневник с темным интерфейсом, разработанный для удобного отслеживания учебного процесса.
+## features
 
-## Особенности
+- 🌙 stylish dark interface
+- 📱 adaptive design
+- ✨ animations and interactive elements
+- 📊 display of schedule, grades, attendance and homework
+- 📝 filter and search learning data
+- 🚀 quick access to basic functions
 
-- 🌙 Стильный темный интерфейс
-- 📱 Адаптивный дизайн с нижней навигацией в стиле Google
-- ✨ Анимации и интерактивные элементы
-- 📊 Отображение расписания, оценок, посещаемости и домашних заданий
-- 📝 Фильтрация и поиск по учебным данным
-- 🚀 Быстрый доступ к основным функциям
+## technology
 
-## Технологии
+- next.js
+- typescript
+- tailwind css
+- framer motion
+- react query
+- phosphor icons
 
-- Next.js
-- TypeScript
-- Tailwind CSS
-- Framer Motion для анимаций
-- React Query для управления состоянием
-- Phosphor Icons для иконок
-- JetBrains Mono и Inter в качестве шрифтов
+## installation and startup
 
-## Установка и запуск
-
-1. Клонируйте репозиторий
-2. Установите зависимости:
+1. clone repo
+2. establish dependencies:
    ```
    npm install
    ```
-3. Запустите приложение:
+3. run app:
    ```
    npm run dev
    ```
 
-## Структура проекта
+## structure
 
-- `/components` - UI компоненты
-- `/pages` - Страницы Next.js
-- `/lib` - Утилиты и хуки
-- `/styles` - Стили и CSS
-- `/public` - Статические файлы
+- `/components` - ui components
+- `/pages` - next.js pages
+- `/lib` - utilities and hooks
+- `/styles` - styles and css
+- `/public` - static files
 
-## Скриншоты
+## screenshots
 
-Главная страница дашборда | Страница расписания | Страница оценок
+dashboard | schedule | grades page
 :-------------------------:|:-------------------------:|:-------------------------:
-![Дашборд](https://via.placeholder.com/250x500) | ![Расписание](https://via.placeholder.com/250x500) | ![Оценки](https://via.placeholder.com/250x500)
-
-## Лицензия
-
-MIT 
+![dashboard](https://imgur.com/a/WEU7mzk) | ![schedule](https://imgur.com/a/bDLm8ha) | ![grades page](https://imgur.com/a/uL3M4gP)
