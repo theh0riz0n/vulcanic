@@ -87,6 +87,14 @@ export const ApiapProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
 
+    // Log final headers for debugging
+    console.log('ApiapContext: Final headers:', Object.keys(headers).join(', '));
+    if (headers['X-APIAP']) {
+      console.log('ApiapContext: X-APIAP header present with length:', headers['X-APIAP'].length);
+    } else {
+      console.log('ApiapContext: X-APIAP header missing');
+    }
+
     return headers;
   };
 

@@ -75,9 +75,34 @@ export const saveUserData = (apiap: string, name: string, email: string): void =
   if (typeof window === 'undefined') return;
   
   try {
-    localStorage.setItem('auth_apiap', apiap);
+    // Format the APIAP string if needed
+    let formattedApiap = apiap;
+    if (!apiap.startsWith('<html>')) {
+      try {
+        // Try to parse as JSON if it looks like JSON
+        let jsonData = {};
+        if (apiap.trim().startsWith('{')) {
+          jsonData = JSON.parse(apiap);
+        } else {
+          // Try to extract from HTML format
+          const match = apiap.match(/<input id="ap" type="hidden" value="(.*?)"><\/body>/);
+          if (match && match[1]) {
+            const htmlDecodedJson = match[1].replace(/&quot;/g, '"');
+            jsonData = JSON.parse(htmlDecodedJson);
+          }
+        }
+        // Create properly formatted APIAP string
+        formattedApiap = `<html><head></head><body><input id="ap" type="hidden" value='${JSON.stringify(jsonData)}' /></body></html>`;
+      } catch (error) {
+        console.error('Failed to format APIAP string:', error);
+      }
+    }
+    
+    localStorage.setItem('auth_apiap', formattedApiap);
     localStorage.setItem('auth_name', name);
     localStorage.setItem('auth_email', email);
+    
+    console.log('Saved formatted APIAP with length:', formattedApiap.length);
   } catch (error) {
     console.error('Failed to save user data to localStorage:', error);
   }
