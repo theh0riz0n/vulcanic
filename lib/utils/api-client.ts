@@ -298,4 +298,37 @@ export const getHomework = async (startDate: string, endDate: string) => {
     console.error('[API CLIENT DEBUG] Error fetching homework:', error);
     throw error;
   }
+};
+
+// Get changed lessons (substitutions)
+export const getChangedLessons = async (startDate: string, endDate: string) => {
+  try {
+    console.log(`[API CLIENT DEBUG] getChangedLessons called with dates: ${startDate} to ${endDate}`);
+    const hebe = await initVulcan();
+    const date1 = new Date(startDate);
+    const date2 = new Date(endDate);
+    
+    console.log(`[API CLIENT DEBUG] Parsed dates for substitutions: ${date1.toISOString()} to ${date2.toISOString()}`);
+    console.log(`[API CLIENT DEBUG] Calling hebe.getChangedLessons...`);
+    
+    const changedLessons = await hebe.getChangedLessons(date1, date2);
+    
+    console.log(`[API CLIENT DEBUG] Raw API response for substitutions:`, changedLessons);
+    
+    // Check data structure and presence of Envelope
+    if (changedLessons && changedLessons.Envelope) {
+      console.log(`[API CLIENT DEBUG] Found Envelope with ${Array.isArray(changedLessons.Envelope) ? changedLessons.Envelope.length : 'non-array'} substitutions`);
+      return changedLessons.Envelope || [];
+    } else if (changedLessons && Array.isArray(changedLessons)) {
+      console.log(`[API CLIENT DEBUG] Found array with ${changedLessons.length} substitutions`);
+      return changedLessons;
+    } else {
+      console.log(`[API CLIENT DEBUG] Unexpected data structure for substitutions:`, changedLessons);
+      // Return empty array if data is missing or has unexpected structure
+      return [];
+    }
+  } catch (error) {
+    console.error('[API CLIENT DEBUG] Error fetching substitutions:', error);
+    throw error;
+  }
 }; 

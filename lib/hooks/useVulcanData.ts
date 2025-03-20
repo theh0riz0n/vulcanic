@@ -7,7 +7,7 @@ type DateRange = {
   endDate: string;
 };
 
-export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades' | 'homework', dateRange?: DateRange) => {
+export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades' | 'homework' | 'substitutions', dateRange?: DateRange) => {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -67,6 +67,15 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
             if (!dateRange) throw new Error('Date range is required for homework');
             apiUrl = `/api/vulcan/homework?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
             console.log(`[DEBUG] Fetching homework: ${apiUrl}`);
+            response = await axios.get(apiUrl, {
+              cancelToken: cancelTokenSource.token
+            });
+            break;
+            
+          case 'substitutions':
+            if (!dateRange) throw new Error('Date range is required for substitutions');
+            apiUrl = `/api/vulcan/substitutions?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+            console.log(`[DEBUG] Fetching substitutions: ${apiUrl}`);
             response = await axios.get(apiUrl, {
               cancelToken: cancelTokenSource.token
             });
@@ -171,7 +180,7 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
 };
 
 // Хук для получения данных текущей недели
-export const useCurrentWeekData = (type: 'lessons' | 'exams' | 'attendance' | 'homework') => {
+export const useCurrentWeekData = (type: 'lessons' | 'exams' | 'attendance' | 'homework' | 'substitutions') => {
   const getExtendedWeekRange = (): DateRange => {
     const now = new Date();
     const dayOfWeek = now.getDay();
@@ -222,7 +231,7 @@ export const useCurrentWeekData = (type: 'lessons' | 'exams' | 'attendance' | 'h
 };
 
 // Хук для получения данных на текущий месяц
-export const useCurrentMonthData = (type: 'lessons' | 'exams' | 'attendance' | 'homework') => {
+export const useCurrentMonthData = (type: 'lessons' | 'exams' | 'attendance' | 'homework' | 'substitutions') => {
   const getCurrentMonthRange = (): DateRange => {
     const now = new Date();
     
@@ -239,7 +248,7 @@ export const useCurrentMonthData = (type: 'lessons' | 'exams' | 'attendance' | '
   return useVulcanData(type, dateRange);
 }; 
 
-export const useCurrentDayData= (type: 'lessons' | 'exams' | 'attendance' | 'homework') => {
+export const useCurrentDayData= (type: 'lessons' | 'exams' | 'attendance' | 'homework' | 'substitutions') => {
   const getCurrentDayRange = (): DateRange => {
     const now = new Date();
     

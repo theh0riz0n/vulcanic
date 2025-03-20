@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
-import { useCurrentWeekData } from '@/lib/hooks/useVulcanData';
+import { useCurrentWeekData, useCurrentDayData } from '@/lib/hooks/useVulcanData';
 import { formatDate, getDayOfWeek, formatTime } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
 import { 
@@ -11,7 +11,8 @@ import {
   Notepad,
   Envelope,
   BookOpen,
-  Building
+  Building,
+  Warning
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import Loading from '@/components/ui/Loading';
@@ -21,9 +22,13 @@ import { getUserData } from '@/lib/utils/auth-utils';
 
 function Dashboard() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { data: lessons, isLoading, error } = useCurrentWeekData('lessons');
+  const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useCurrentDayData('lessons');
+  const { data: substitutions, isLoading: substitutionsLoading, error: substitutionsError } = useCurrentDayData('substitutions');
   const [todaysLessons, setTodaysLessons] = useState<any[]>([]);
   const [greeting, setGreeting] = useState('Good day');
+
+  const isLoading = lessonsLoading || substitutionsLoading;
+  const error = lessonsError || substitutionsError;
 
   // Get user information from localStorage
   const { name, email } = getUserData();
@@ -51,8 +56,9 @@ function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  // Combine lessons and substitutions for today
   useEffect(() => {
-    if (lessons && lessons.length > 0) {
+    if ((lessons && lessons.length > 0) || (substitutions && substitutions.length > 0)) {
       // Get today's date in local timezone format (YYYY-MM-DD)
       const todayObj = new Date();
       const todayYear = todayObj.getFullYear();
@@ -62,7 +68,8 @@ function Dashboard() {
       
       console.log('[DEBUG] Today\'s date for filtering:', today);
       
-      const filtered = lessons.filter(lesson => {
+      // Filter regular lessons
+      const filteredLessons = lessons ? lessons.filter(lesson => {
         // Check date format from API
         let lessonDate = null;
         
@@ -112,12 +119,111 @@ function Dashboard() {
         
         console.log(`[DEBUG] Lesson date: ${lessonDate}, comparing with today: ${today}`);
         return lessonDate === today;
+      }) : [];
+      
+      // Filter substitutions
+      const filteredSubstitutions = substitutions ? substitutions.filter(substitution => {
+        let substitutionDate = null;
+        
+        if (substitution.LessonDate) {
+          // Extract from LessonDate object
+          if (typeof substitution.LessonDate === 'object') {
+            if (substitution.LessonDate.Date) {
+              substitutionDate = substitution.LessonDate.Date;
+            } else if (substitution.LessonDate.Year && substitution.LessonDate.Month && substitution.LessonDate.Day) {
+              const year = substitution.LessonDate.Year;
+              const month = String(substitution.LessonDate.Month).padStart(2, '0');
+              const day = String(substitution.LessonDate.Day).padStart(2, '0');
+              substitutionDate = `${year}-${month}-${day}`;
+            }
+          }
+        } else if (substitution.Date) {
+          // Use existing date extraction logic as fallback
+          if (typeof substitution.Date === 'object' && substitution.Date.Date) {
+            substitutionDate = substitution.Date.Date;
+          } 
+          else if (typeof substitution.Date === 'string') {
+            substitutionDate = substitution.Date.split('T')[0];
+          }
+        }
+        
+        return substitutionDate === today;
+      }) : [];
+      
+      console.log(`[DEBUG] Found ${filteredLessons.length} lessons and ${filteredSubstitutions.length} substitutions for today`);
+      
+      // Process substitutions to mark replaced lessons
+      const enhancedLessons = [...filteredLessons];
+      
+      // Add substitutions to the lessons array with a flag
+      filteredSubstitutions.forEach(substitution => {
+        // Get the original replaced lesson ID if available
+        let replacedLessonId = null;
+        if (substitution.ScheduleId) {
+          replacedLessonId = substitution.ScheduleId;
+        }
+        
+        // Determine if this is a direct replacement or a new lesson
+        if (replacedLessonId) {
+          // Check if this substitution replaces an existing lesson
+          const existingLessonIndex = enhancedLessons.findIndex(lesson => 
+            lesson.Id === replacedLessonId || lesson.ScheduleId === replacedLessonId
+          );
+          
+          if (existingLessonIndex >= 0) {
+            // Replace the existing lesson with this substitution but keep original info
+            const originalInfo = enhancedLessons[existingLessonIndex];
+            
+            // Create the replacement object
+            const replacementLesson = {
+              ...substitution,
+              isSubstitution: true,
+              originalSubject: originalInfo.Subject,
+              originalTeacher: originalInfo.TeacherPrimary || originalInfo.Teacher,
+              originalRoom: originalInfo.Room,
+              substitutionReason: substitution.TeacherAbsenceEffectName || 'Substitution',
+              Change: substitution.Change
+            };
+
+            // Preserve TimeSlot from original lesson if not present in substitution
+            if (!replacementLesson.TimeSlot && originalInfo.TimeSlot) {
+              replacementLesson.TimeSlot = {
+                ...originalInfo.TimeSlot,
+                isFromOriginalLesson: true
+              };
+            }
+            
+            // Preserve TimeStart and TimeEnd from original lesson if not present in substitution
+            if ((!replacementLesson.TimeStart || !replacementLesson.TimeEnd) && 
+                (originalInfo.TimeStart || originalInfo.TimeEnd)) {
+              replacementLesson.TimeStart = replacementLesson.TimeStart || originalInfo.TimeStart;
+              replacementLesson.TimeEnd = replacementLesson.TimeEnd || originalInfo.TimeEnd;
+            }
+            
+            // Replace the original lesson with the substitution
+            enhancedLessons[existingLessonIndex] = replacementLesson;
+          } else {
+            // Add as a new lesson with substitution flag
+            enhancedLessons.push({
+              ...substitution,
+              isSubstitution: true,
+              substitutionReason: substitution.TeacherAbsenceEffectName || 'Substitution',
+              Change: substitution.Change
+            });
+          }
+        } else {
+          // If there's no direct relation, just add as a new lesson with substitution flag
+          enhancedLessons.push({
+            ...substitution,
+            isSubstitution: true,
+            substitutionReason: substitution.TeacherAbsenceEffectName || 'Substitution',
+            Change: substitution.Change
+          });
+        }
       });
       
-      console.log(`[DEBUG] Filtered ${filtered.length} lessons for today:`, filtered);
-      
-      // Sort by time
-      const sorted = filtered.sort((a, b) => {
+      // Existing sorting and current lesson logic
+      const sorted = enhancedLessons.sort((a, b) => {
         // Convert lesson start time to Date object for comparison
         let timeA, timeB;
         
@@ -219,8 +325,10 @@ function Dashboard() {
       });
       
       setTodaysLessons(mappedLessons);
+    } else {
+      setTodaysLessons([]);
     }
-  }, [lessons, currentDate]); // Added currentDate to dependencies to update active lesson
+  }, [lessons, substitutions]);
 
   const quickLinks = [
     { title: 'Schedule', icon: Calendar, color: 'bg-accent', href: '/dashboard/schedule' },
@@ -289,33 +397,80 @@ function Dashboard() {
 
         <h2 className="text-xl font-mono font-bold mb-4">Today</h2>
         
+        {/* Display lessons (including substitutions) */}
         {todaysLessons.length > 0 ? (
           <div className="space-y-3">
-            {todaysLessons.map((lesson, index) => (
-              <Card 
-                key={index} 
-                className={`p-4 ${lesson.isCurrentLesson ? 'border-2 border-accent' : ''}`}
-                withHover={false}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium text-text-primary">
-                      {lesson.Subject?.Name || lesson.Subject || 'Lesson'}
-                    </h3>
-                    <p className="text-sm text-text-secondary">
-                      {lesson.Room?.Code ? `Room: ${lesson.Room.Code}` : (lesson.Room ? `Room: ${lesson.Room}` : '')}
-                      {lesson.TeacherPrimary?.DisplayName ? ` • ${lesson.TeacherPrimary.DisplayName}` : 
-                       (lesson.Teacher ? ` • ${lesson.Teacher}` : '')}
-                    </p>
+            {todaysLessons.map((lesson, index) => {
+              // Check if this is a substitution
+              const isSubstitution = lesson.isSubstitution || false;
+              const substitutionReason = lesson.substitutionReason || '';
+              let changeType = '';
+              
+              // Get change information if it exists
+              if (lesson.Change && lesson.Change.Type) {
+                switch (lesson.Change.Type) {
+                  case 1:
+                    changeType = 'Canceled';
+                    break;
+                  case 2:
+                    changeType = 'Changed';
+                    break;
+                  case 3:
+                    changeType = 'Moved to';
+                    break;
+                  default:
+                    changeType = 'Modified';
+                }
+              }
+              
+              return (
+                <Card 
+                  key={index} 
+                  className={`p-4 ${lesson.isCurrentLesson ? 'border-2 border-accent' : ''} ${isSubstitution ? 'border-l-4 border-warning' : ''}`}
+                  withHover={false}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-text-primary">
+                          {lesson.Subject?.Name || lesson.Subject || 'Lesson'}
+                        </h3>
+                        {isSubstitution && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-warning text-white">
+                            {substitutionReason || changeType || 'Substitution'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary">
+                        {lesson.Room?.Code ? `Room: ${lesson.Room.Code}` : (lesson.Room ? `Room: ${lesson.Room}` : '')}
+                        {lesson.TeacherPrimary?.DisplayName ? ` • ${lesson.TeacherPrimary.DisplayName}` : 
+                         (lesson.Teacher ? ` • ${lesson.Teacher}` : '')}
+                      </p>
+                      {isSubstitution && lesson.originalSubject && lesson.Subject && (
+                        <p className="text-xs text-warning-dark mt-1">
+                          {typeof lesson.originalSubject === 'string' 
+                            ? `Changed from: ${lesson.originalSubject}` 
+                            : `Changed from: ${lesson.originalSubject.Name || 'Unknown'}`}
+                        </p>
+                      )}
+                      {isSubstitution && lesson.originalSubject && (!lesson.TimeSlot || (lesson.TimeSlot && !lesson.TimeSlot.isFromOriginalLesson)) && (
+                        <p className="text-xs text-info-dark mt-1">
+                          Using original lesson time
+                        </p>
+                      )}
+                    </div>
+                    <div className="bg-surface px-3 py-1 rounded-full text-text-secondary text-sm">
+                      {lesson.TimeSlot?.Display || 
+                       (lesson.TimeStart && lesson.TimeEnd ? `${formatTime(lesson.TimeStart)} - ${formatTime(lesson.TimeEnd)}` : 
+                        (lesson.TimeSlot ? `${lesson.TimeSlot.Start} - ${lesson.TimeSlot.End}` : 'Time not specified'))}
+                      {isSubstitution && lesson.originalSubject && 
+                        lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson && 
+                        ' (Original time)'}
+                    </div>
                   </div>
-                  <div className="bg-surface px-3 py-1 rounded-full text-text-secondary text-sm">
-                    {lesson.TimeSlot?.Display || 
-                     (lesson.TimeStart && lesson.TimeEnd ? `${formatTime(lesson.TimeStart)} - ${formatTime(lesson.TimeEnd)}` : 
-                      (lesson.TimeSlot ? `${lesson.TimeSlot.Start} - ${lesson.TimeSlot.End}` : 'Time not specified'))}
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <Card className="p-6 text-center" withHover={false}>
@@ -328,19 +483,22 @@ function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-2xl font-bold mb-1">{greeting}!</h1>
-          <p className="text-text-secondary">
-            {formatDate(currentDate, 'EEEE, d MMMM')}
-          </p>
-        </motion.div>
+      <div className="mb-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-mono font-bold">
+            {greeting}, {userInfo.name.split(' ')[0]}!
+          </h1>
+          <div className="text-right">
+            <p className="text-text-secondary">
+              {formatDate(currentDate, 'EEEE, MMMM d')}
+            </p>
+            <p className="text-text-tertiary text-sm">
+              {formatDate(currentDate, 'h:mm a')}
+            </p>
+          </div>
+        </div>
       </div>
-
+      
       {renderContent()}
     </DashboardLayout>
   );

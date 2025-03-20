@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
@@ -8,12 +8,14 @@ import {
   House,
   Notepad,
   ClockCounterClockwise,
-  User
+  User,
+  Warning
 } from '@phosphor-icons/react';
+import axios from 'axios';
 
 const navItems = [
   { name: 'Home', href: '/dashboard', icon: House },
-  { name: 'Schedule', href: '/dashboard/schedule', icon: Calendar },
+  { name: 'Schedule', href: '/dashboard/schedule', icon: Calendar, checkSubstitutions: true },
   { name: 'Grades', href: '/dashboard/grades', icon: GraduationCap },
   { name: 'Homework', href: '/dashboard/homework', icon: Notepad },
   { name: 'Attendance', href: '/dashboard/attendance', icon: ClockCounterClockwise },
@@ -22,11 +24,39 @@ const navItems = [
 
 const BottomNavigation: React.FC = () => {
   const router = useRouter();
+  const [hasSubstitutions, setHasSubstitutions] = useState(false);
 
   // Log current path for debugging
   useEffect(() => {
     console.log('Current path:', router.pathname);
   }, [router.pathname]);
+
+  // Check if there are substitutions for today
+  useEffect(() => {
+    const checkTodaySubstitutions = async () => {
+      try {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        const response = await axios.get(`/api/vulcan/substitutions?startDate=${dateStr}&endDate=${dateStr}`);
+        
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          console.log('Found substitutions for today:', response.data.length);
+          setHasSubstitutions(true);
+        } else {
+          setHasSubstitutions(false);
+        }
+      } catch (error) {
+        console.error('Error checking substitutions:', error);
+        setHasSubstitutions(false);
+      }
+    };
+    
+    checkTodaySubstitutions();
+  }, []);
 
   // Handle navigation safely
   const handleNavigation = (href: string) => (e: React.MouseEvent) => {
@@ -89,6 +119,11 @@ const BottomNavigation: React.FC = () => {
                       size={24} 
                       weight={isActive ? "fill" : "regular"}
                     />
+                    
+                    {/* Show notification indicator for substitutions */}
+                    {item.checkSubstitutions && hasSubstitutions && !isActive && (
+                      <span className="absolute -top-1 -right-2 w-2 h-2 bg-warning rounded-full"></span>
+                    )}
                     
                     {isActive && (
                       <motion.span
