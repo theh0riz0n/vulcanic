@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
@@ -24,15 +24,48 @@ const BottomNavigation: React.FC = () => {
   const router = useRouter();
 
   // Log current path for debugging
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('Current path:', router.pathname);
   }, [router.pathname]);
 
-  // Handle navigation manually to avoid blank pages
+  // Handle navigation safely
   const handleNavigation = (href: string) => (e: React.MouseEvent) => {
     e.preventDefault();
-    // Force a hard navigation instead of client-side navigation
-    window.location.href = href;
+    
+    // Safety check - if already on this page, don't navigate
+    if (router.pathname === href) {
+      return;
+    }
+    
+    // Wrap in try/catch to prevent any errors during navigation
+    try {
+      // Add a class to the body to indicate navigation is in progress
+      if (typeof document !== 'undefined') {
+        document.body.classList.add('navigating');
+      }
+      
+      // Disable error reporting during navigation
+      const originalOnError = window.onerror;
+      window.onerror = (message) => {
+        if (message === 'Component unmounted' || String(message).includes('unmounted')) {
+          console.log('Suppressed navigation error:', message);
+          return true;
+        }
+        return false;
+      };
+      
+      // Use location.href for a cleaner navigation without client-side routing
+      window.location.href = href;
+      
+      // Restore error handling after a delay (just in case navigation didn't complete)
+      setTimeout(() => {
+        window.onerror = originalOnError;
+      }, 1000);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback
+      window.location.href = href;
+    }
   };
 
   return (

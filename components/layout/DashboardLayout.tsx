@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import BottomNavigation from './BottomNavigation';
 import { motion } from 'framer-motion';
 
@@ -8,6 +8,63 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) => {
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  // Listen for navigation events
+  useEffect(() => {
+    const handleBeforeNavigate = () => {
+      setIsNavigating(true);
+    };
+    
+    // Try to detect navigation
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', handleBeforeNavigate);
+      
+      // For SPA navigation
+      const originalPushState = window.history.pushState.bind(window.history);
+      window.history.pushState = function() {
+        handleBeforeNavigate();
+        return originalPushState.apply(this, arguments as any);
+      };
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeNavigate);
+        window.history.pushState = originalPushState;
+      };
+    }
+    
+    return undefined;
+  }, []);
+  
+  // Hide any errors that occur during navigation
+  useEffect(() => {
+    // Add global error handler
+    const handleError = (event: Event) => {
+      // Type guard to check if it's an ErrorEvent
+      if (
+        isNavigating && 
+        event instanceof ErrorEvent && 
+        event.message === 'Component unmounted'
+      ) {
+        // Prevent the error from being shown to the user
+        event.preventDefault();
+        console.log('Suppressed "Component unmounted" error during navigation');
+        return true;
+      }
+      return false;
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', handleError);
+      
+      return () => {
+        window.removeEventListener('error', handleError);
+      };
+    }
+    
+    return undefined;
+  }, [isNavigating]);
+  
   return (
     <div className="min-h-screen flex flex-col bg-background pb-20">
       {title && (
@@ -29,7 +86,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
         }}
       >
         <div className="max-w-screen-lg mx-auto px-4 py-4 w-full">
-          {children}
+          {!isNavigating && children}
         </div>
       </motion.main>
       

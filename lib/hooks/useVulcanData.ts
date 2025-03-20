@@ -76,18 +76,30 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
             throw new Error(`Unsupported data type: ${type}`);
         }
         
-        console.log(`[DEBUG] API response for ${type}:`, response);
-        
-        if (response.data && Array.isArray(response.data)) {
-          setData(response.data);
-        } else if (response.data && response.data.Envelope && Array.isArray(response.data.Envelope)) {
-          console.log(`[DEBUG] Extracted array from Envelope for ${type}`);
-          setData(response.data.Envelope);
-        } else {
-          console.warn(`[DEBUG] Unexpected API response format for ${type}:`, response.data);
-          setData([]);
+        // Only process response if component is still mounted
+        if (isMounted) {
+          console.log(`[DEBUG] API response for ${type}:`, response);
+          
+          if (response.data && Array.isArray(response.data)) {
+            setData(response.data);
+          } else if (response.data && response.data.Envelope && Array.isArray(response.data.Envelope)) {
+            console.log(`[DEBUG] Extracted array from Envelope for ${type}`);
+            setData(response.data.Envelope);
+          } else {
+            console.warn(`[DEBUG] Unexpected API response format for ${type}:`, response.data);
+            setData([]);
+          }
         }
       } catch (err: any) {
+        // Only process errors if component is still mounted
+        if (!isMounted) return;
+        
+        // Ignore canceled requests
+        if (axios.isCancel(err)) {
+          console.log(`[DEBUG] ${type} request canceled:`, err.message);
+          return;
+        }
+        
         console.error(`[DEBUG] Error fetching ${type} data:`, err);
         console.error(`[DEBUG] Error details:`, err.response?.data || err.message);
         
@@ -101,23 +113,25 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
           (err.response?.status === 401);
         
         // If API key error and not already retrying, try to refresh the APIAP
-        if (isApiKeyError && !retry) {
+        if (isApiKeyError && !retry && isMounted) {
           console.log('[DEBUG] Authentication error detected, attempting to refresh APIAP...');
           try {
             const refreshed = await refreshApiap();
-            if (refreshed) {
+            if (refreshed && isMounted) {
               console.log('[DEBUG] APIAP refreshed successfully, retrying API call...');
               // Retry the API call with the refreshed token
               return fetchData(true);
-            } else {
+            } else if (isMounted) {
               console.error('[DEBUG] Failed to refresh APIAP');
               setError(new Error('Your authentication has expired. Please log out and log in again.'));
             }
           } catch (refreshError) {
-            console.error('[DEBUG] Error during APIAP refresh:', refreshError);
-            setError(new Error('Your authentication has expired. Please log out and log in again.'));
+            if (isMounted) {
+              console.error('[DEBUG] Error during APIAP refresh:', refreshError);
+              setError(new Error('Your authentication has expired. Please log out and log in again.'));
+            }
           }
-        } else {
+        } else if (isMounted) {
           setError(new Error(errorMessage || `Failed to fetch ${type} data`));
         }
       } finally {
@@ -127,13 +141,29 @@ export const useVulcanData = (type: 'lessons' | 'exams' | 'attendance' | 'grades
       }
     };
     
-    fetchData();
+    // Start the data fetch
+    fetchData().catch(err => {
+      // Handle any uncaught errors in the async function
+      if (isMounted && !axios.isCancel(err)) {
+        console.error(`[DEBUG] Uncaught error in ${type} data fetch:`, err);
+        setError(new Error(`An unexpected error occurred: ${err.message}`));
+        setIsLoading(false);
+      }
+    });
     
+    // Cleanup function
     return () => {
+      // Set mounted flag to false first
       isMounted = false;
-      // Cancel any in-flight requests when component unmounts
-      cancelTokenSource.cancel('Component unmounted');
-      console.log(`[DEBUG] Canceled ${type} data requests due to component unmount`);
+      
+      try {
+        // Then cancel any in-flight requests
+        cancelTokenSource.cancel('Component unmounted');
+        // Don't log the cancellation to avoid the "Component unmounted" error in the UI
+      } catch (err) {
+        // Silently handle any errors during cleanup
+        console.error(`[DEBUG] Error during ${type} request cleanup:`, err);
+      }
     };
   }, [type, dateRange?.startDate, dateRange?.endDate, refreshApiap]);
 
