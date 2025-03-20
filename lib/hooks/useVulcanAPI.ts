@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApiap } from '@/context/ApiapContext';
-
+// usevulcanapi
 // Custom hook for making API calls to the Vulcan API endpoints
 export function useVulcanAPI() {
   const [loading, setLoading] = useState<boolean>(false);
@@ -14,10 +14,66 @@ export function useVulcanAPI() {
     
     try {
       // Get authentication headers (including APIAP)
-      const headers = {
-        ...getAuthHeaders(),
-        ...options.headers,
+      const authHeaders = getAuthHeaders();
+      
+      // Create a Map to store normalized headers
+      const headerMap = new Map<string, string>();
+      
+      // Helper function to normalize header name
+      const normalizeHeaderName = (name: string): string => name.toLowerCase();
+      
+      // Helper function to set a header with case-insensitive deduplication
+      const setNormalizedHeader = (name: string, value: string | null | undefined) => {
+        if (value !== undefined && value !== null) {
+          headerMap.set(normalizeHeaderName(name), String(value));
+        }
       };
+      
+      // Process auth headers first, but skip Content-Type
+      Object.entries(authHeaders).forEach(([key, value]) => {
+        if (normalizeHeaderName(key) !== 'content-type') {
+          setNormalizedHeader(key, value);
+        }
+      });
+      
+      // Process input headers, which should take precedence over auth headers
+      if (options.headers) {
+        if (options.headers instanceof Headers) {
+          options.headers.forEach((value, key) => {
+            setNormalizedHeader(key, value);
+          });
+        } else if (typeof options.headers === 'object') {
+          Object.entries(options.headers).forEach(([key, value]) => {
+            setNormalizedHeader(key, value);
+          });
+        }
+      }
+      
+      // Set default Content-Type only if no Content-Type header exists
+      if (!headerMap.has('content-type')) {
+        headerMap.set('content-type', 'application/json');
+      }
+      
+      // Create final Headers object with deduplicated values
+      const headers = new Headers();
+      headerMap.forEach((value, key) => {
+        // Preserve proper header casing for well-known headers
+        const properCase = key === 'content-type' ? 'Content-Type' : 
+                         key === 'x-apiap' ? 'X-APIAP' : key;
+        headers.set(properCase, value);
+      });
+      
+      // Check for X-APIAP header
+      const hasApiapHeader = headerMap.has('x-apiap');
+      const apiapValue = headerMap.get('x-apiap');
+      const isValidApiapHeader = hasApiapHeader && apiapValue && apiapValue.trim() !== '';
+      
+      console.log('Making authenticated request:', 
+        isValidApiapHeader ? 'X-APIAP header is present and valid' : 'X-APIAP header is missing or invalid');
+      
+      if (!isValidApiapHeader) {
+        throw new Error('X-APIAP header is required and must not be empty');
+      }
       
       // Make request with authentication
       const response = await fetch(url, {
