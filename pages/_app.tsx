@@ -3,6 +3,8 @@ import type { AppProps } from 'next/app';
 import { AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/react"
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ApiapProvider } from '@/context/ApiapContext';
 import { SnowflakesProvider } from '@/context/SnowflakesContext';
