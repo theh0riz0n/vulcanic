@@ -1,5 +1,13 @@
 # darktide - custom client for eduvulcan
 
+## todo
+
+- [x] api/ap auth system
+- [x] substitution handling
+- [ ] updates on dashboard
+- [ ] push notifications
+- [ ] more ui customization
+
 ## features
 
 - 🌙 stylish dark interface
