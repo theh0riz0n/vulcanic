@@ -168,7 +168,7 @@ function Profile() {
                   <Gift size={16} className="mr-2 text-primary" />
                   <span>App Version</span>
                 </div>
-                <div className="text-text-secondary font-mono">1.5.0</div>
+                <div className="text-text-secondary font-mono">2.1.4</div>
               </div>
             </div>
           </Card>
@@ -185,11 +185,8 @@ function Profile() {
                 <p>
                     This app is made by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a>
                     <br />
-                    You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/eduvulcan-app" target="_blank" rel="noopener noreferrer">here</a>
+                    You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/darktide" target="_blank" rel="noopener noreferrer">here</a>
                     <br />
-                    <p className="text-text-secondary">
-                        Yaroshenko to jebany pedal
-                    </p>
                 </p> 
             </div>
           </Card>
