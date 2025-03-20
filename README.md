@@ -37,9 +37,3 @@
 - `/lib` - utilities and hooks
 - `/styles` - styles and css
 - `/public` - static files
-
-## screenshots
-
-dashboard | schedule | grades page
-:-------------------------:|:-------------------------:|:-------------------------:
-![dashboard](https://imgur.com/a/WEU7mzk) | ![schedule](https://imgur.com/a/bDLm8ha) | ![grades page](https://imgur.com/a/uL3M4gP)
