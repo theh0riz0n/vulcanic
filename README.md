@@ -1,5 +1,6 @@
 # vulcanic - custom client for eduvulcan
 🔗 https://vulcanic.vercel.app/
+--------------------------------
 🔗 https://discord.gg/4RNJpZ3bqb
 ## todo
 
