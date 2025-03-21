@@ -315,7 +315,7 @@ function Profile() {
                 <p>
                     This app is made by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a>
                     <br />
-                    You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/darktide" target="_blank" rel="noopener noreferrer">here</a>
+                    You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/vulcanic" target="_blank" rel="noopener noreferrer">here</a>
                     <br />
                 </p> 
             </div>
@@ -323,7 +323,7 @@ function Profile() {
         </motion.div>
 
         <div className="text-center text-text-secondary text-xs mt-8 mb-4">
-          <p>Dark Tide © 2025</p>
+          <p>Vulcanic © 2025</p>
           <p className="mt-1">Made with ♥ for students</p>
         </div>
 

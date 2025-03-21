@@ -35,7 +35,7 @@ export default function AuthModal({ onSubmit, isLoading, error }: AuthModalProps
         transition={{ delay: 0.1 }}
         className="bg-background rounded-lg shadow-xl p-6 max-w-md w-full"
       >
-        <h2 className="text-2xl font-bold text-primary mb-2">Welcome to Dark Tide</h2>
+        <h2 className="text-2xl font-bold text-primary mb-2">Welcome to Vulcanic</h2>
         <p className="text-text-secondary mb-6">Please follow the steps below to connect your EduVulcan account</p>
         
         {error && (

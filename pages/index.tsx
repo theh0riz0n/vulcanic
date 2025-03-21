@@ -91,7 +91,7 @@ export default function Home() {
         className="text-center"
       >
         <h1 className="text-3xl md:text-5xl font-mono font-bold text-primary mb-2">
-          Dark Tide
+          Vulcanic
         </h1>
         <p className="text-text-secondary mb-6">Electronic Diary</p>
         

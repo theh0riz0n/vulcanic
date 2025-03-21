@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
  
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'DarkTide (vulcanic)',
-    short_name: 'DarkTide',
+    name: 'Vulcanic',
+    short_name: 'Vulcanic',
     description: 'A fork of EduVulcan e-diary.',
     start_url: '/',
     display: 'standalone',

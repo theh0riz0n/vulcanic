@@ -1,6 +1,6 @@
 {
-  "name": "DarkTide (vulcanic)",
-  "short_name": "Dark Tide",
+  "name": "Vulcanic",
+  "short_name": "Vulcanic",
   "description": "Fork of EduVulkan",
   "start_url": "/",
   "display": "standalone",
