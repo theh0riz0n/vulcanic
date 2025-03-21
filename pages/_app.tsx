@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ApiapProvider } from '@/context/ApiapContext';
 import { SnowflakesProvider } from '@/context/SnowflakesContext';
+import { ThemeProvider } from '@/context/AccentColorContext';
 import Snowflakes from '@/components/effects/Snowflakes';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -77,12 +78,16 @@ export default function App({ Component, pageProps, router }: AppProps) {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ApiapProvider>
-          <SnowflakesProvider>
-            <Snowflakes />
-            <AnimatePresence mode="wait" initial={true}>
-              <Component {...pageProps} key={router.route} />
-            </AnimatePresence>
-          </SnowflakesProvider>
+          <ThemeProvider>
+            <SnowflakesProvider>
+              <Snowflakes />
+              <AnimatePresence mode="wait" initial={true}>
+                <Component {...pageProps} key={router.route} />
+              </AnimatePresence>
+              <Analytics />
+              <SpeedInsights />
+            </SnowflakesProvider>
+          </ThemeProvider>
         </ApiapProvider>
       </QueryClientProvider>
     </ErrorBoundary>

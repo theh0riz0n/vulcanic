@@ -9,15 +9,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'primary': '#7C3AED',
+        'primary': 'var(--color-primary, #7C3AED)',
         'primary-dark': '#6D28D9',
         'secondary': '#F472B6',
         'accent': '#38BDF8',
-        'background': '#111827',
-        'surface': '#1F2937',
-        'overlay': '#374151',
-        'text-primary': '#F9FAFB',
-        'text-secondary': '#D1D5DB',
+        'background': 'rgb(var(--background-rgb, 17, 24, 39))',
+        'surface': 'rgb(var(--surface-rgb, 31, 41, 55))',
+        'overlay': 'rgb(var(--overlay-rgb, 55, 65, 81))',
+        'text-primary': 'rgb(var(--foreground-rgb, 249, 250, 251))',
+        'text-secondary': 'rgb(var(--text-secondary-rgb, 209, 213, 219))',
       },
       fontFamily: {
         mono: ['JetBrains Mono', 'monospace'],

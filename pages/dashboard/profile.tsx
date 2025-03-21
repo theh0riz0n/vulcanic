@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
@@ -14,19 +14,33 @@ import {
   EnvelopeSimple,
   GraduationCap,
   Buildings,
-  Snowflake
+  Snowflake,
+  PaintBrush,
+  Moon,
+  Sun
 } from '@phosphor-icons/react';
 import { useRouter } from 'next/router';
 import withAuth from '@/lib/utils/withAuth';
 import { getUserData, clearUserData } from '@/lib/utils/auth-utils';
 import { useSnowflakes } from '@/context/SnowflakesContext';
+import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColorContext';
 import { useApiap } from '@/context/ApiapContext';
 
 function Profile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
+  const { 
+    accentColor, 
+    setAccentColor, 
+    backgroundColor, 
+    setBackgroundColor, 
+    isDarkMode, 
+    toggleThemeMode 
+  } = useTheme();
   const { clearApiap } = useApiap();
+  const [colorChanged, setColorChanged] = useState(false);
+  const [bgChanged, setBgChanged] = useState(false);
   
   // Get user data from localStorage
   const { name, email } = getUserData();
@@ -40,6 +54,26 @@ function Profile() {
     id: '3dc57ed0-9668-402e-82e9-53c0da5f8aba',
     unitId: '67b10649-9dce-4738-9a32-88e3c7c1ec88'
   };
+
+  // Handle color change with feedback
+  const handleColorChange = (color: string) => {
+    setAccentColor(color);
+    setColorChanged(true);
+    setTimeout(() => setColorChanged(false), 1200);
+  };
+  
+  // Handle background color change with feedback
+  const handleBgChange = (color: string) => {
+    setBackgroundColor(color);
+    setBgChanged(true);
+    setTimeout(() => setBgChanged(false), 1200);
+  };
+
+  // Filter background colors based on current theme mode
+  const filteredBackgroundColors = Object.entries(BACKGROUND_COLORS).filter(([key, _]) => {
+    const isDarkColor = ['dark', 'darker', 'navy', 'gray', 'charcoal', 'black'].includes(key);
+    return isDarkMode ? isDarkColor : !isDarkColor;
+  });
 
   const handleLogout = () => {
     try {
@@ -62,7 +96,7 @@ function Profile() {
 
   return (
     <DashboardLayout title="Profile">
-      <div className="space-y-6">
+      <div className="space-y-6 theme-transition">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -106,7 +140,97 @@ function Profile() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Snowflake size={20} className="mr-2 text-blue-400" />
+                    {isDarkMode ? (
+                      <Moon size={20} className="mr-2 text-primary" />
+                    ) : (
+                      <Sun size={20} className="mr-2 text-primary" />
+                    )}
+                    <span>Theme Mode</span>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <span className="mr-2 text-xs text-text-secondary">
+                      {isDarkMode ? 'Dark' : 'Light'}
+                    </span>
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer"
+                      checked={!isDarkMode}
+                      onChange={toggleThemeMode}
+                    />
+                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-surface after:border-surface' : 'bg-gray-200 after:border-gray-300'} peer-checked:bg-primary`}></div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <PaintBrush size={20} className="mr-2 text-primary" />
+                    <span>Accent Color</span>
+                  </div>
+                  {colorChanged && (
+                    <span className="text-xs text-primary animate-fade-in">
+                      Color updated!
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {Object.entries(ACCENT_COLORS).map(([name, color]) => (
+                    <button
+                      key={name}
+                      onClick={() => handleColorChange(color)}
+                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${
+                        accentColor === color 
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110' 
+                          : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      aria-label={`Set ${name} as accent color`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Moon size={20} className="mr-2 text-primary" />
+                    <span>Background Color</span>
+                  </div>
+                  {bgChanged && (
+                    <span className="text-xs text-primary animate-fade-in">
+                      Background updated!
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {filteredBackgroundColors.map(([name, color]) => (
+                    <button
+                      key={name}
+                      onClick={() => handleBgChange(color)}
+                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${
+                        backgroundColor === color 
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110' 
+                          : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: `rgb(${color})` }}
+                      aria-label={`Set ${name} background`}
+                    >
+                      <span className="absolute text-xs font-bold" style={{ 
+                        color: isDarkMode ? 'white' : 'black',
+                        opacity: 0.75
+                      }}>
+                        {name.charAt(0).toUpperCase()}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Snowflake size={20} className="mr-2 text-primary" />
                     <span>Snowflakes Effect</span>
                   </div>
                   <label className="inline-flex items-center cursor-pointer">
@@ -116,7 +240,7 @@ function Profile() {
                       checked={showSnowflakes}
                       onChange={(e) => setShowSnowflakes(e.target.checked)}
                     />
-                    <div className="relative w-11 h-6 bg-surface rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-surface after:border-surface' : 'bg-gray-200 after:border-gray-300'} peer-checked:bg-primary`}></div>
                   </label>
                 </div>
                 {showSnowflakes && (
@@ -132,7 +256,7 @@ function Profile() {
                       step="10"
                       value={snowflakeIntensity}
                       onChange={(e) => setSnowflakeIntensity(Number(e.target.value))}
-                      className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary accent-transition"
                     />
                   </div>
                 )}

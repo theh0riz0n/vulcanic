@@ -8,12 +8,17 @@
 :root {
   --foreground-rgb: 249, 250, 251;
   --background-rgb: 17, 24, 39;
+  --color-primary: #7C3AED;
+  --surface-rgb: 31, 41, 55;
+  --overlay-rgb: 55, 65, 81;
+  --text-secondary-rgb: 209, 213, 219;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
   font-family: 'Inter', sans-serif;
+  transition: background-color 0.5s ease;
 }
 
 .font-mono {
@@ -21,13 +26,14 @@ body {
 }
 
 .card {
-  @apply bg-surface rounded-xl shadow-card overflow-hidden;
+  @apply bg-surface rounded-xl overflow-hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .card:hover {
-  @apply shadow-elevation;
   transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
 }
 
 .nav-item {
@@ -35,15 +41,28 @@ body {
 }
 
 .nav-item.active {
-  @apply text-primary bg-overlay/30;
+  @apply text-primary;
+  background-color: rgba(var(--overlay-rgb), 0.3);
 }
 
 .nav-item:not(.active):hover {
-  @apply bg-overlay/20 text-text-primary;
+  background-color: rgba(var(--overlay-rgb), 0.2);
+  @apply text-text-primary;
 }
 
 .blur-backdrop {
-  @apply backdrop-blur-md bg-background/80;
+  @apply backdrop-blur-md;
+  background-color: rgba(var(--background-rgb), 0.8);
+}
+
+/* Accent color transitions */
+.accent-transition {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme transitions */
+.theme-transition {
+  transition: background-color 0.5s ease, color 0.3s ease;
 }
 
 /* Animations */
@@ -80,7 +99,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--color-primary);
   cursor: pointer;
   transition: background .15s ease-in-out;
 }
@@ -90,7 +109,7 @@ input[type="range"]::-moz-range-thumb {
   height: 18px;
   border: 0;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--color-primary);
   cursor: pointer;
   transition: background .15s ease-in-out;
 }
@@ -110,5 +129,5 @@ input[type="range"]::-moz-range-thumb {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/50;
+  background-color: rgba(var(--color-primary), 0.5);
 } 
