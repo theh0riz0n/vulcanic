@@ -1,5 +1,5 @@
-# darktide - custom client for eduvulcan
-🔗 https://darktide.vercel.app/
+# vulcanic - custom client for eduvulcan
+🔗 https://vulcanic.vercel.app/
 ## todo
 
 - [x] api/ap auth system
