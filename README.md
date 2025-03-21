@@ -1,7 +1,6 @@
 # vulcanic - custom client for eduvulcan
-🔗 https://vulcanic.vercel.app/
---------------------------------
-🔗 https://discord.gg/4RNJpZ3bqb
+🔗 App: https://vulcanic.vercel.app/
+🔗 Discord: https://discord.gg/4RNJpZ3bqb
 ## todo
 
 - [x] api/ap auth system
