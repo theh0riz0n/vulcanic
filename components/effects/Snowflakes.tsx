@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useSnowflakes } from '@/context/SnowflakesContext';
+import styles from './Snowflakes.module.css';
 
 interface Snowflake {
   x: number;
@@ -13,7 +14,7 @@ interface Snowflake {
 
 const Snowflakes: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { showSnowflakes, snowflakeIntensity } = useSnowflakes();
+  const { showSnowflakes, snowflakeIntensity, isSnowflakesLoaded } = useSnowflakes();
   const snowflakesRef = useRef<Snowflake[]>([]);
   const animationRef = useRef<number>(0);
 
@@ -25,7 +26,7 @@ const Snowflakes: React.FC = () => {
 
   // Initialize canvas and animation
   useEffect(() => {
-    if (!showSnowflakes) {
+    if (!showSnowflakes || !isSnowflakesLoaded) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -107,14 +108,15 @@ const Snowflakes: React.FC = () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [showSnowflakes, snowflakeIntensity]);
+  }, [showSnowflakes, snowflakeIntensity, isSnowflakesLoaded]);
 
+  if (!isSnowflakesLoaded) return null;
   if (!showSnowflakes) return null;
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-10"
+      className={styles.snowflakeCanvas}
     />
   );
 };

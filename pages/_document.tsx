@@ -1,4 +1,5 @@
 import Document, { Html, Head, Main, NextScript, DocumentContext } from 'next/document';
+import { ThemeScript } from '@/context/AccentColorContext';
 
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -31,6 +32,8 @@ class MyDocument extends Document {
           <link rel='shortcut icon' href='/favicon.ico' />
         </Head>
         <body>
+          {/* Apply theme before React hydration to prevent flicker */}
+          <ThemeScript />
           <Main />
           <NextScript />
         </body>

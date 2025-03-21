@@ -70,7 +70,7 @@ function Profile() {
   };
 
   // Filter background colors based on current theme mode
-  const filteredBackgroundColors = Object.entries(BACKGROUND_COLORS).filter(([key, _]) => {
+  const filteredBackgroundColors = Object.entries(BACKGROUND_COLORS).filter(([key]) => {
     const isDarkColor = ['dark', 'darker', 'navy', 'gray', 'charcoal', 'black'].includes(key);
     return isDarkMode ? isDarkColor : !isDarkColor;
   });
@@ -157,7 +157,7 @@ function Profile() {
                       checked={!isDarkMode}
                       onChange={toggleThemeMode}
                     />
-                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-surface after:border-surface' : 'bg-gray-200 after:border-gray-300'} peer-checked:bg-primary`}></div>
+                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
                   </label>
                 </div>
               </div>
@@ -240,7 +240,7 @@ function Profile() {
                       checked={showSnowflakes}
                       onChange={(e) => setShowSnowflakes(e.target.checked)}
                     />
-                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-surface after:border-surface' : 'bg-gray-200 after:border-gray-300'} peer-checked:bg-primary`}></div>
+                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
                   </label>
                 </div>
                 {showSnowflakes && (
