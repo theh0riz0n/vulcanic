@@ -12,6 +12,7 @@
   --surface-rgb: 31, 41, 55;
   --overlay-rgb: 55, 65, 81;
   --text-secondary-rgb: 209, 213, 219;
+  --primary-rgb: 124, 58, 237;
 }
 
 body {
@@ -37,17 +38,23 @@ body {
 }
 
 .nav-item {
-  @apply flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200;
+  @apply flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 w-20 h-16 text-text-secondary;
+}
+
+.nav-item:not(.active):hover {
+  @apply text-text-primary;
 }
 
 .nav-item.active {
   @apply text-primary;
-  background-color: rgba(var(--overlay-rgb), 0.3);
 }
 
-.nav-item:not(.active):hover {
-  background-color: rgba(var(--overlay-rgb), 0.2);
-  @apply text-text-primary;
+.icon-container {
+  @apply relative flex items-center justify-center h-8 w-16 rounded-full transition-all duration-300;
+}
+
+.icon-container.active {
+  background-color: rgba(var(--primary-rgb), 0.2);
 }
 
 .blur-backdrop {
@@ -130,4 +137,4 @@ input[type="range"]::-moz-range-thumb {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(var(--color-primary), 0.5);
-} 
+}

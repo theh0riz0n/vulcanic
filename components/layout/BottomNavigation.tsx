@@ -111,30 +111,18 @@ const BottomNavigation: React.FC = () => {
               <li key={item.name} className="relative">
                 <a 
                   href={item.href}
-                  className={`nav-item flex flex-col items-center p-2 ${isActive ? 'text-primary' : 'text-text-secondary'}`}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
                   onClick={handleNavigation(item.href)}
                 >
-                  <span className="relative">
+                  <div className={`icon-container ${isActive ? 'active' : ''}`}>
                     <item.icon 
                       size={24} 
                       weight={isActive ? "fill" : "regular"}
                     />
-                    
-                    {/* Show notification indicator for substitutions */}
                     {item.checkSubstitutions && hasSubstitutions && !isActive && (
                       <span className="absolute -top-1 -right-2 w-2 h-2 bg-warning rounded-full"></span>
                     )}
-                    
-                    {isActive && (
-                      <motion.span
-                        className="absolute -bottom-1 left-1/2 w-1 h-1 bg-primary rounded-full"
-                        layoutId="bottomNavIndicator"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    )}
-                  </span>
+                  </div>
                   <span className="text-xs mt-1 font-medium">{item.name}</span>
                 </a>
               </li>
@@ -146,4 +134,4 @@ const BottomNavigation: React.FC = () => {
   );
 };
 
-export default BottomNavigation; 
+export default BottomNavigation;
