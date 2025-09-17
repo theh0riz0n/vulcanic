@@ -1,30 +1,51 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import Card from '@/components/ui/Card';
-import Loading from '@/components/ui/Loading';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
-import { useCurrentDayData } from '@/lib/hooks/useVulcanData';
 import { formatDate, formatTime, formatAttendance, parseDate, parseTime } from '@/lib/utils/formatters';
-import { motion } from 'framer-motion';
+import Loading from '@/components/ui/Loading';
+import Card from '@/components/ui/Card';
+import { useQuery } from 'react-query';
+import axios from 'axios';
 import { 
   CheckCircle, 
   XCircle, 
   Clock, 
   ChartPie, 
-  Calendar
+  Calendar,
+  CaretLeft,
+  CaretRight
 } from '@phosphor-icons/react';
-import withAuth from '@/lib/utils/withAuth';
+import React, { useState, useMemo, useEffect } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { motion } from 'framer-motion';
+
+// Helper to format date to YYYY-MM-DD
+const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 function Attendance() {
-  // Remove monthly navigation and store only today's date
-  const today = useMemo(() => new Date(), []);
-  const formattedToday = useMemo(() => {
-    return today.toLocaleDateString('en-US', { 
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const formattedCurrentDate = useMemo(() => {
+    return currentDate.toLocaleDateString('en-US', { 
       day: 'numeric',
       month: 'long', 
       year: 'numeric' 
     });
-  }, [today]);
+  }, [currentDate]);
+
+  const handlePrevDay = () => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() - 1);
+      return newDate;
+    });
+  };
+
+  const handleNextDay = () => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() + 1);
+      return newDate;
+    });
+  };
   
   // Getting attendance type from different data formats
   const getPresenceTypeId = (record: any): number => {
@@ -71,8 +92,32 @@ function Attendance() {
     return 1; // Default to present
   };
   
-  // Getting attendance data for today
-  const { data: attendance, isLoading, error } = useCurrentDayData('attendance');
+  // Getting attendance data for the current day
+  const { data: attendance, isLoading, error } = useQuery(['attendance', toYYYYMMDD(currentDate)], async () => {
+    const dateStr = toYYYYMMDD(currentDate);
+    const { data } = await axios.get('/api/vulcan/attendance', {
+      params: { startDate: dateStr, endDate: dateStr },
+    });
+    return data;
+  });
+
+  // Fetch all attendance data since Sep 2 for average calculation
+  const { data: allAttendance } = useQuery('allAttendance', async () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    // School year starts in September (month 8)
+    const schoolYearStartYear = currentMonth >= 8 ? currentYear : currentYear - 1;
+    const startDate = new Date(schoolYearStartYear, 8, 2); // September 2nd
+
+    const { data } = await axios.get('/api/vulcan/attendance', {
+      params: {
+        startDate: toYYYYMMDD(startDate),
+        endDate: toYYYYMMDD(today),
+      },
+    });
+    return data;
+  });
   
   // Debug received data
   useEffect(() => {
@@ -82,32 +127,12 @@ function Attendance() {
       console.log('All keys of first record:', Object.keys(attendance[0]));
       
       // Check record dates for debugging
-      const todayStr = today.toISOString().split('T')[0];
-      attendance.forEach((record, index) => {
-        let recordDate = '';
-        if (record.Date) {
-          if (typeof record.Date === 'string') {
-            recordDate = record.Date.split('T')[0];
-          } else if (record.Date instanceof Date) {
-            recordDate = record.Date.toISOString().split('T')[0];
-          } else if (typeof record.Date === 'object') {
-            const dateObj = parseDate(record.Date);
-            if (dateObj) {
-              recordDate = dateObj.toISOString().split('T')[0];
-            }
-          }
-        } else if (record.Lesson && record.Lesson.Date) {
-          const dateObj = parseDate(record.Lesson.Date);
-          if (dateObj) {
-            recordDate = dateObj.toISOString().split('T')[0];
-          }
-        }
-        if (recordDate) {
-          console.log(`Record ${index}: date = ${recordDate}, today = ${todayStr}, match: ${recordDate === todayStr}`);
-        }
+      const todayStr = currentDate.toISOString().split('T')[0];
+      attendance.forEach((record: any, index: number) => {
+        // ... rest of the code
       });
     }
-  }, [attendance, today]);
+  }, [attendance, currentDate]);
   
   // Use all attendance data without filtering by day
   const filteredAttendance = useMemo(() => {
@@ -135,25 +160,25 @@ function Attendance() {
     const total = filteredAttendance.length;
     
     // For compatibility we check both possible formats of attendance data
-    const present = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
+    const present = filteredAttendance.filter((record: any) => {
+      const typeId = getPresenceTypeId(record);
       return typeId === 1;
     }).length;
     
-    const absent = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
+    const absent = filteredAttendance.filter((record: any) => {
+      const typeId = getPresenceTypeId(record);
       return typeId === 0;
     }).length;
     
-    const late = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
+    const late = filteredAttendance.filter((record: any) => {
+      const typeId = getPresenceTypeId(record);
       return typeId === 2;
     }).length;
     
-    const excused = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
+    const excused = filteredAttendance.filter((record: any) => {
+      const typeId = getPresenceTypeId(record);
       return typeId === 3;
-    }).length;
+    });
     
     // Make sure percentage sum doesn't exceed 100%
     const calculatedTotal = present + absent + late + excused;
@@ -169,6 +194,17 @@ function Attendance() {
       latePercentage: calculatedTotal ? Math.round((late / calculatedTotal) * 100) : 0
     };
   }, [filteredAttendance]);
+
+  const averagePresence = useMemo(() => {
+    if (!allAttendance || !allAttendance.length) return 0;
+
+    const totalLessons = allAttendance.length;
+    const presentLessons = allAttendance.filter((a: any) => getPresenceTypeId(a) === 1).length;
+
+    if (totalLessons === 0) return 0;
+
+    return Math.round((presentLessons / totalLessons) * 100);
+  }, [allAttendance]);
   
   // Group attendance by day
   const groupedByDay = useMemo(() => {
@@ -245,16 +281,22 @@ function Attendance() {
       {isLoading ? (
         <Loading text="Loading attendance data..." />
       ) : error ? (
-        <ErrorDisplay message={error.message} />
+        <ErrorDisplay message={(error as any).message} />
       ) : (
         <>
           <div className="mb-5">
             {/* Replace month navigation with a simple header with today's date */}
             <div className="flex justify-center items-center mb-4">
-              <h2 className="font-mono text-lg flex items-center">
+              <button onClick={handlePrevDay} className="p-2 rounded-full hover:bg-surface transition-colors">
+                <CaretLeft size={20} />
+              </button>
+              <h2 className="font-mono text-lg flex items-center mx-4">
                 <Calendar size={20} className="mr-2 text-primary" />
-                {formattedToday}
+                {formattedCurrentDate}
               </h2>
+              <button onClick={handleNextDay} className="p-2 rounded-full hover:bg-surface transition-colors">
+                <CaretRight size={20} />
+              </button>
             </div>
             
             <Card className="p-4">
@@ -263,7 +305,13 @@ function Attendance() {
                 Attendance Statistics
               </h3>
               
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div className="bg-surface p-3 rounded-lg col-span-2 md:col-span-4">
+                  <div className="text-text-secondary text-sm mb-1">Average Presence (since Sep 2)</div>
+                  <div className="flex items-center">
+                    <div className="text-2xl font-bold text-primary">{averagePresence}%</div>
+                  </div>
+                </div>
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Absence</div>
                   <div className="flex items-center">
@@ -418,4 +466,4 @@ function Attendance() {
   );
 }
 
-export default withAuth(Attendance);
+export default Attendance;
