@@ -36,8 +36,8 @@ function Dashboard() {
   const userInfo = {
     name: name || 'User',
     email: email || 'user@example.com',
-    class: 'ZSE-I',
-    school: 'Lodz'
+    class: '3TL',
+    school: 'Zespół Szkół im. Prymasa Tysiąclecia w Teresinie'
   };
 
   useEffect(() => {
