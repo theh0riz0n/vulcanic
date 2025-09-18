@@ -30,8 +30,8 @@ const nextConfig = {
     styledComponents: true,
   },
   env: {
-    APP_VERSION: version,
-    LATEST_COMMIT_MESSAGE: latestCommit,
+    NEXT_PUBLIC_APP_VERSION: version,
+    NEXT_PUBLIC_LATEST_COMMIT_MESSAGE: latestCommit,
   },
   
   // Add configuration to resolve issues with fs and other Node.js modules

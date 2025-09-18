@@ -1,0 +1,20 @@
+
+{
+  "theme": "Theme",
+  "dark": "Dark",
+  "light": "Light",
+  "accentColor": "Accent Color",
+  "colorUpdated": "Color updated!",
+  "backgroundColor": "Background Color",
+  "backgroundUpdated": "Background updated!",
+  "snowflakesEffect": "Snowflakes Effect",
+  "snowflakeIntensity": "Snowflake Intensity",
+  "language": "Language",
+  "technicalData": "Technical Data",
+  "userId": "User ID",
+  "schoolId": "School ID",
+  "appVersion": "App Version",
+  "credits": "Credits",
+  "logout": "Log Out",
+  "loggingOut": "Logging out..."
+}

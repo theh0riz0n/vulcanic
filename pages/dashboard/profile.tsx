@@ -298,7 +298,7 @@ function Profile() {
                   <Gift size={16} className="mr-2 text-primary" />
                   <span>App Version</span>
                 </div>
-                <div className="text-text-secondary font-mono">9182025.1</div>
+                <div className="text-text-secondary font-mono">9182025.2</div>
               </div>
             </div>
           </Card>
@@ -313,10 +313,11 @@ function Profile() {
             <h3 className="text-lg font-bold mb-4">Credits</h3>
             <div className="flex">
                 <p>
-                    This app is made by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a>
+                    This app is was made by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a> and it's being updated regularly by <a className="text-blue-500" href="https://github.com/theh0riz0n/vulcanic" target="_blank" rel="noopener noreferrer">Horizon</a>.
                     <br />
                     You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/vulcanic" target="_blank" rel="noopener noreferrer">here</a>
                     <br />
+                    Please note that this app is a fork of the original Vulcanic app, with some modifications and improvements. All credit goes to the original author <a className="text-blue-500" href="https://github.com/0xhkamori/vulcanic" target="_blank" rel="noopener noreferrer">0xhkamori</a>
                 </p> 
             </div>
           </Card>
