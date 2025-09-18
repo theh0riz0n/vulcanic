@@ -1,7 +1,6 @@
 # vulcanic - custom client for eduvulcan
 🔗 App: https://vulcanic.vercel.app/
 
-🔗 Discord: https://discord.gg/4RNJpZ3bqb
 ## todo
 
 - [x] api/ap auth system
@@ -10,6 +9,9 @@
 - [ ] updates on dashboard
 - [ ] push notifications
 - [ ] details menus
+- [ ] fix translations
+- [ ] fix schedule bug
+- [ ] get messages working..?
 
 ## features
 
