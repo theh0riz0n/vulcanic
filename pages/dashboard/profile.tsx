@@ -25,6 +25,7 @@ import { getUserData, clearUserData } from '@/lib/utils/auth-utils';
 import { useSnowflakes } from '@/context/SnowflakesContext';
 import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColorContext';
 import { useApiap } from '@/context/ApiapContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 function Profile() {
   const router = useRouter();
@@ -41,6 +42,7 @@ function Profile() {
   const { clearApiap } = useApiap();
   const [colorChanged, setColorChanged] = useState(false);
   const [bgChanged, setBgChanged] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
   
   // Get user data from localStorage
   const { name, email } = getUserData();
@@ -95,7 +97,7 @@ function Profile() {
   };
 
   return (
-    <DashboardLayout title="Profile">
+    <DashboardLayout title={t('profile_title')}>
       <div className="space-y-6 theme-transition">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -117,7 +119,7 @@ function Profile() {
                   </div>
                   <div className="flex items-center justify-center sm:justify-start">
                     <BookOpen size={16} className="mr-2" />
-                    <span>Class {userData.class}</span>
+                    <span>{t('profile_class')} {userData.class}</span>
                   </div>
                   <div className="flex items-center justify-center sm:justify-start">
                     <Building size={16} className="mr-2" />
@@ -135,7 +137,7 @@ function Profile() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Card className="p-6">
-            <h3 className="text-lg font-mono font-bold mb-4">App Settings</h3>
+            <h3 className="text-lg font-mono font-bold mb-4">{t('app_settings')}</h3>
             <div className="space-y-6">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -145,11 +147,11 @@ function Profile() {
                     ) : (
                       <Sun size={20} className="mr-2 text-primary" />
                     )}
-                    <span>Theme Mode</span>
+                    <span>{t('theme_mode')}</span>
                   </div>
                   <label className="inline-flex items-center cursor-pointer">
                     <span className="mr-2 text-xs text-text-secondary">
-                      {isDarkMode ? 'Dark' : 'Light'}
+                      {isDarkMode ? 'Ciemny' : 'Jasny'}
                     </span>
                     <input 
                       type="checkbox" 
@@ -166,11 +168,11 @@ function Profile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <PaintBrush size={20} className="mr-2 text-primary" />
-                    <span>Accent Color</span>
+                    <span>{t('accent_color')}</span>
                   </div>
                   {colorChanged && (
                     <span className="text-xs text-primary animate-fade-in">
-                      Color updated!
+                      {t('color_updated')}
                     </span>
                   )}
                 </div>
@@ -185,7 +187,7 @@ function Profile() {
                           : 'hover:scale-105'
                       }`}
                       style={{ backgroundColor: color }}
-                      aria-label={`Set ${name} as accent color`}
+                      aria-label={`${t('set_as_accent_color')} ${name}`}
                     />
                   ))}
                 </div>
@@ -195,11 +197,11 @@ function Profile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Moon size={20} className="mr-2 text-primary" />
-                    <span>Background Color</span>
+                    <span>{t('background_color')}</span>
                   </div>
                   {bgChanged && (
                     <span className="text-xs text-primary animate-fade-in">
-                      Background updated!
+                      {t('background_updated')}
                     </span>
                   )}
                 </div>
@@ -214,7 +216,7 @@ function Profile() {
                           : 'hover:scale-105'
                       }`}
                       style={{ backgroundColor: `rgb(${color})` }}
-                      aria-label={`Set ${name} background`}
+                      aria-label={`${t('set_background')} ${name}`}
                     >
                       <span className="absolute text-xs font-bold" style={{ 
                         color: isDarkMode ? 'white' : 'black',
@@ -231,7 +233,7 @@ function Profile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Snowflake size={20} className="mr-2 text-primary" />
-                    <span>Snowflakes Effect</span>
+                    <span>{t('snowflakes_effect')}</span>
                   </div>
                   <label className="inline-flex items-center cursor-pointer">
                     <input 
@@ -246,7 +248,7 @@ function Profile() {
                 {showSnowflakes && (
                   <div className="pt-2">
                     <label htmlFor="snowflake-intensity" className="block mb-2 text-sm font-medium">
-                      Snowflake Intensity: {snowflakeIntensity}%
+                      {t('snowflake_intensity')}: {snowflakeIntensity}%
                     </label>
                     <input
                       id="snowflake-intensity"
@@ -277,7 +279,7 @@ function Profile() {
               className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70"
             >
               <SignOut size={20} className="mr-2" />
-              {isLoggingOut ? 'Logging out...' : 'Log Out'}
+              {isLoggingOut ? t('logging_out') : t('log_out')}
             </button>
           </Card>
         </motion.div>

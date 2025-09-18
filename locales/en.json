@@ -16,5 +16,16 @@
   "appVersion": "App Version",
   "credits": "Credits",
   "logout": "Log Out",
-  "loggingOut": "Logging out..."
+  "loggingOut": "Logging out...",
+  "profile_title": "Profile",
+  "profile_class": "Class",
+  "profile_school": "School",
+  "profile_logout": "Logout",
+  "profile_accent_color": "Accent Color",
+  "profile_background_color": "Background Color",
+  "profile_dark_mode": "Dark Mode",
+  "profile_snowflakes": "Snowflakes",
+  "profile_snowflake_intensity": "Snowflake Intensity",
+  "profile_color_changed": "Color changed successfully!",
+  "profile_bg_changed": "Background changed successfully!"
 }

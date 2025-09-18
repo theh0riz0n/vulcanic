@@ -9,7 +9,7 @@ type Language = 'en' | 'pl';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (language: Language) => void;
+  setLanguage: (lang: Language) => void;
   t: (key: string) => string;
 }
 
@@ -22,17 +22,19 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const storedLang = localStorage.getItem('vulcanic-lang') as Language;
     if (storedLang && ['en', 'pl'].includes(storedLang)) {
       setLanguageState(storedLang);
+      document.documentElement.lang = storedLang;
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('vulcanic-lang', lang);
+    document.documentElement.lang = lang;
   };
 
-  const t = (key: string) => {
-    const langFile = translations[language] as { [key: string]: string };
-    return langFile[key] || key;
+  const t = (key: string): string => {
+    const langFile = translations[language] as { [key: string]: string | undefined };
+    return langFile?.[key] || key;
   };
 
   return (
