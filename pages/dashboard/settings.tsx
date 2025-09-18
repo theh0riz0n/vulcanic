@@ -10,8 +10,10 @@ import {
   Moon,
   Sun,
   Snowflake,
-  Palette
+  Palette,
+  Translate
 } from '@phosphor-icons/react';
+import { useLanguage } from '@/context/LanguageContext';
 
 function Settings() {
   const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
@@ -23,6 +25,7 @@ function Settings() {
     isDarkMode, 
     toggleThemeMode 
   } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   
   const [colorChanged, setColorChanged] = useState(false);
   const [bgChanged, setBgChanged] = useState(false);
@@ -48,14 +51,14 @@ function Settings() {
   });
 
   return (
-    <DashboardLayout title="Settings">
+    <DashboardLayout title={t('settings.title')}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="space-y-6"
       >
-        <h1 className="text-2xl font-mono font-bold">App Settings</h1>
+        <h1 className="text-2xl font-mono font-bold">{t('settings.appSettings')}</h1>
         <Card className="p-6">
           <div className="space-y-6">
             <div className="space-y-2">
@@ -66,11 +69,11 @@ function Settings() {
                   ) : (
                     <Sun size={20} className="mr-2 text-primary" />
                   )}
-                  <span>Theme Mode</span>
+                  <span>{t('settings.themeMode')}</span>
                 </div>
                 <label className="inline-flex items-center cursor-pointer">
                   <span className="mr-2 text-xs text-text-secondary">
-                    {isDarkMode ? 'Dark' : 'Light'}
+                    {isDarkMode ? t('settings.dark') : t('settings.light')}
                   </span>
                   <input 
                     type="checkbox" 
@@ -87,11 +90,11 @@ function Settings() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <PaintBrush size={20} className="mr-2 text-primary" />
-                  <span>Accent Color</span>
+                  <span>{t('settings.accentColor')}</span>
                 </div>
                 {colorChanged && (
                   <span className="text-xs text-primary animate-fade-in">
-                    Color updated!
+                    {t('settings.colorUpdated')}
                   </span>
                 )}
               </div>
@@ -116,11 +119,11 @@ function Settings() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Palette size={20} className="mr-2 text-primary" />
-                  <span>Background Color</span>
+                  <span>{t('settings.backgroundColor')}</span>
                 </div>
                 {bgChanged && (
                   <span className="text-xs text-primary animate-fade-in">
-                    Background updated!
+                    {t('settings.backgroundUpdated')}
                   </span>
                 )}
               </div>
@@ -144,8 +147,25 @@ function Settings() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
+                  <Translate size={20} className="mr-2 text-primary" />
+                  <span>{t('settings.language')}</span>
+                </div>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as any)}
+                  className="bg-surface border border-border rounded px-3 py-1 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="en">English</option>
+                  <option value="pl">Polski</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <Snowflake size={20} className="mr-2 text-primary" />
-                  <span>Snowflakes Effect</span>
+                  <span>{t('settings.snowflakesEffect')}</span>
                 </div>
                 <label className="inline-flex items-center cursor-pointer">
                   <input 

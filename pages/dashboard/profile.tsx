@@ -271,69 +271,6 @@ function Profile() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="p-6">
-            <h3 className="text-lg font-mono font-bold mb-4">Technical Data</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
-                <div className="flex items-center">
-                  <IdentificationCard size={16} className="mr-2 text-primary" />
-                  <span>User ID</span>
-                </div>
-                <div className="text-text-secondary font-mono bg-background px-2 py-1 rounded text-xs overflow-x-auto max-w-[200px] whitespace-nowrap">
-                  {userData.id}
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
-                <div className="flex items-center">
-                  <Building size={16} className="mr-2 text-primary" />
-                  <span>School ID</span>
-                </div>
-                <div className="text-text-secondary font-mono bg-background px-2 py-1 rounded text-xs overflow-x-auto max-w-[200px] whitespace-nowrap">
-                  {userData.unitId}
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center p-2 bg-surface rounded-lg">
-                <div className="flex items-center">
-                  <Gift size={16} className="mr-2 text-primary" />
-                  <span>App Version</span>
-                </div>
-                <div className="text-text-secondary font-mono">9182025.4</div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="p-6">
-            <h3 className="text-lg font-bold mb-4">Credits</h3>
-            <div className="flex">
-                <p>
-                    This app is was made by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a> and it's being updated regularly by <a className="text-blue-500" href="https://github.com/theh0riz0n/vulcanic" target="_blank" rel="noopener noreferrer">Horizon</a>.
-                    <br />
-                    You can find the source code <a className="text-blue-500" href="https://github.com/0xhkamori/vulcanic" target="_blank" rel="noopener noreferrer">here</a>
-                    <br />
-                    Please note that this app is a fork of the original Vulcanic app, with some modifications and improvements. All credit goes to the original author <a className="text-blue-500" href="https://github.com/0xhkamori/vulcanic" target="_blank" rel="noopener noreferrer">0xhkamori</a>
-                </p> 
-            </div>
-          </Card>
-        </motion.div>
-
-        <div className="text-center text-text-secondary text-xs mt-8 mb-4">
-          <p>Vulcanic © 2025</p>
-          <p className="mt-1">Made with ♥ for students</p>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="p-6">
             <button 
               onClick={handleLogout}
               disabled={isLoggingOut}
