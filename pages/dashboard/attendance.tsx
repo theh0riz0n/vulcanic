@@ -241,7 +241,7 @@ function Attendance() {
     const grouped = new Map();
     
     // Check for Date or Lesson.Date field in any record
-    const hasDates = filteredAttendance.some(record => 
+    const hasDates = filteredAttendance.some((record: any) => 
       record.Date || 
       record.date || 
       (record.Lesson && record.Lesson.Date)
@@ -254,7 +254,7 @@ function Attendance() {
       grouped.set('Today', filteredAttendance);
     } else {
       // Group by date
-      filteredAttendance.forEach(record => {
+      filteredAttendance.forEach((record: any) => {
         // Format date using our enhanced function
         let date = 'Today'; // Use "Today" as default instead of "No date"
         

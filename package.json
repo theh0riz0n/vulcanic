@@ -1,6 +1,6 @@
 {
   "name": "vulcanic-journal",
-  "version": "1.5b",
+  "version": "1.5.1b",
   "private": true,
   "scripts": {
     "dev": "next dev",
