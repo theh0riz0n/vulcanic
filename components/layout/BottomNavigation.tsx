@@ -6,9 +6,7 @@ import {
   Calendar,
   GraduationCap,
   House,
-  Notepad,
-  ClockCounterClockwise,
-  User,
+  DotsThree,
   Warning
 } from '@phosphor-icons/react';
 import axios from 'axios';
@@ -17,9 +15,7 @@ const navItems = [
   { name: 'Home', href: '/dashboard', icon: House },
   { name: 'Schedule', href: '/dashboard/schedule', icon: Calendar, checkSubstitutions: true },
   { name: 'Grades', href: '/dashboard/grades', icon: GraduationCap },
-  { name: 'Homework', href: '/dashboard/homework', icon: Notepad },
-  { name: 'Attendance', href: '/dashboard/attendance', icon: ClockCounterClockwise },
-  { name: 'Profile', href: '/dashboard/profile', icon: User }
+  { name: 'More', href: '/dashboard/more', icon: DotsThree }
 ];
 
 const BottomNavigation: React.FC = () => {
