@@ -94,25 +94,25 @@ const About: React.FC = () => {
             </h3>
             <div className="text-sm text-text-secondary space-y-4">
               <p>
-                This app was created with love for students who want a better experience.
+                This is a fork of the original Vulcanic dashboard by <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a>, all credits go to the original developer. I <a className="text-blue-500" href="https://github.com/theh0riz0n" target="_blank" rel="noopener noreferrer">theh0riz0n</a> only made additional improvements and fixes.
               </p>
               <div className="flex items-center">
                 <UserCircle size={16} className="mr-2" />
-                <span>Created by: vulcanic</span>
+                <span>Created by: <a className="text-blue-500" href="https://github.com/0xhkamori" target="_blank" rel="noopener noreferrer">0xhkamori</a> and being updated by: <a className="text-blue-500" href="https://github.com/theh0riz0n" target="_blank" rel="noopener noreferrer">theh0riz0n</a></span>
               </div>
               <div className="flex items-center">
                 <EnvelopeSimple size={16} className="mr-2" />
-                <span>Contact: vulcanic@gmail.com</span>
+                <span>Contact: N/A</span>
               </div>
               <div className="flex items-center">
                 <GithubLogo size={16} className="mr-2" />
                 <a 
-                  href="https://github.com/vulcanic" 
+                  href="https://github.com/theh0riz0n/vulcanic" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
-                  github.com/vulcanic
+                  https://github.com/theh0riz0n/vulcanic
                 </a>
               </div>
             </div>
