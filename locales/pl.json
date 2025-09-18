@@ -1,0 +1,26 @@
+
+{
+  "dashboard.title": "Panel",
+  "schedule.title": "Plan lekcji",
+  "grades.title": "Oceny",
+  "attendance.title": "Frekwencja",
+  "homework.title": "Zadania domowe",
+  "profile.title": "Profil",
+  "settings.title": "Ustawienia",
+  "logout.button": "Wyloguj",
+  "search.placeholder": "Szukaj...",
+  "loading.text": "Ładowanie...",
+  "error.text": "Wystąpił błąd.",
+  "noData.text": "Brak danych.",
+  "settings.appSettings": "Ustawienia Aplikacji",
+  "settings.themeMode": "Tryb Motywu",
+  "settings.dark": "Ciemny",
+  "settings.light": "Jasny",
+  "settings.accentColor": "Kolor Akcentu",
+  "settings.colorUpdated": "Kolor zaktualizowany!",
+  "settings.backgroundColor": "Kolor Tła",
+  "settings.backgroundUpdated": "Tło zaktualizowane!",
+  "settings.snowflakesEffect": "Efekt Płatków Śniegu",
+  "settings.language": "Język",
+  "settings.languageUpdated": "Język zaktualizowany!"
+}
