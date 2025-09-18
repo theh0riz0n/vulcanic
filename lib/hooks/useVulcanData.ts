@@ -184,29 +184,32 @@ export const useCurrentWeekData = (type: 'lessons' | 'exams' | 'attendance' | 'h
   const getExtendedWeekRange = (): DateRange => {
     const now = new Date();
     const dayOfWeek = now.getDay();
-    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday is 1, Sunday is 0.
-
+    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Если сегодня воскресенье, разница 6 дней
+    
+    // Начало текущей недели (понедельник)
     const currentMonday = new Date(now);
     currentMonday.setDate(now.getDate() - diff);
-
+    currentMonday.setHours(0, 0, 0, 0);
+    
+    // Конец текущей недели (воскресенье)
+    const currentSunday = new Date(currentMonday);
+    currentSunday.setDate(currentMonday.getDate() + 6);
+    currentSunday.setHours(23, 59, 59, 999);
+    
+    // Расширенный диапазон: неделя назад
     const extendedStart = new Date(currentMonday);
     extendedStart.setDate(currentMonday.getDate() - 7);
-
-    const extendedEnd = new Date(currentMonday);
-    extendedEnd.setDate(currentMonday.getDate() + 20); // Monday + 6 (end of week) + 7 (next week) + 7 (buffer)
-
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
+    
+    // Расширенный диапазон: неделя вперед
+    const extendedEnd = new Date(currentSunday);
+    extendedEnd.setDate(currentSunday.getDate() + 7);
+    
     const result = {
-      startDate: formatDate(extendedStart),
-      endDate: formatDate(extendedEnd),
+      startDate: extendedStart.toISOString().split('T')[0],
+      endDate: extendedEnd.toISOString().split('T')[0],
     };
     
+    // Отладка: вывод диапазона дат для API запроса
     console.log(`[DEBUG] ${type} - Requesting data for extended date range:`, result);
     
     return result;
@@ -235,16 +238,9 @@ export const useCurrentMonthData = (type: 'lessons' | 'exams' | 'attendance' | '
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
     return {
-      startDate: formatDate(firstDay),
-      endDate: formatDate(lastDay),
+      startDate: firstDay.getFullYear() + '-' + String(firstDay.getMonth() + 1).padStart(2, '0') + '-' + String(firstDay.getDate()).padStart(2, '0'),
+      endDate: lastDay.getFullYear() + '-' + String(lastDay.getMonth() + 1).padStart(2, '0') + '-' + String(lastDay.getDate()).padStart(2, '0'),
     };
   };
   
@@ -255,22 +251,28 @@ export const useCurrentMonthData = (type: 'lessons' | 'exams' | 'attendance' | '
 export const useCurrentDayData= (type: 'lessons' | 'exams' | 'attendance' | 'homework' | 'substitutions') => {
   const getCurrentDayRange = (): DateRange => {
     const now = new Date();
-
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    const dateStr = formatDate(now);
     
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    console.log(`[DEBUG] ${type} - Requesting data for extended date range:`, firstDay);
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    console.log(`[DEBUG] ${type} - Requesting data for extended date range:`, lastDay);
+    console.log(firstDay.getFullYear() + '-' + String(firstDay.getMonth() + 1).padStart(2, '0') + '-' + String(firstDay.getDate()).padStart(2, '0'));
+    console.log(lastDay.getFullYear() + '-' + String(lastDay.getMonth() + 1).padStart(2, '0') + '-' + String(lastDay.getDate()).padStart(2, '0'));
+    
+    // Original dates without time offset
     return {
-      startDate: dateStr,
-      endDate: dateStr,
+      startDate: firstDay.getFullYear() + '-' + String(firstDay.getMonth() + 1).padStart(2, '0') + '-' + String(firstDay.getDate()).padStart(2, '0'),
+      endDate: lastDay.getFullYear() + '-' + String(lastDay.getMonth() + 1).padStart(2, '0') + '-' + String(lastDay.getDate()).padStart(2, '0'),
     };
+
+    // Subtract 1 hour from dates
+    
+    // return {
+    //   startDate: firstDay.getFullYear() + '-' + String(firstDay.getMonth() + 1).padStart(2, '0') + '-' + String(firstDay.getDate()).padStart(2, '0'),
+    //   endDate: lastDay.getFullYear() + '-' + String(lastDay.getMonth() + 1).padStart(2, '0') + '-' + String(lastDay.getDate()).padStart(2, '0'),
+    // };
   };
   
   const dateRange = getCurrentDayRange();
   return useVulcanData(type, dateRange);
-};
+}; 
