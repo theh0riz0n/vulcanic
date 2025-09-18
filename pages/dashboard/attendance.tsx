@@ -49,47 +49,75 @@ function Attendance() {
   
   // Getting attendance type from different data formats
   const getPresenceTypeId = (record: any): number => {
-    // Format with presenceTypeId directly
-    if (typeof record.presenceTypeId === 'number') {
-      return record.presenceTypeId;
-    }
-
     if (record.PresenceType) {
       // Check if PresenceType is an object with Id property
-      if (typeof record.PresenceType === 'object' && record.PresenceType !== null && typeof record.PresenceType.Id === 'number') {
-        return record.PresenceType.Id;
+      if (typeof record.PresenceType === 'object' && record.PresenceType !== null) {
+        if (typeof record.PresenceType.Id === 'number') {
+          // Mapping non-standard codes to standard ones
+          if (record.PresenceType.Id === 1228) return 0; // Absence
+          if (record.PresenceType.Id === 1229) return 1; // Presence
+          if (record.PresenceType.Id === 1231) return 2; // Late
+          
+          console.log('Using PresenceType.Id:', record.PresenceType.Id);
+          return record.PresenceType.Id;
+        } else if (record.PresenceType.Type !== undefined) {
+          // In some API responses there might be a Type field instead of Id
+          console.log('Using PresenceType.Type:', record.PresenceType.Type);
+          return record.PresenceType.Type;
+        }
       }
       
       // If PresenceType is a number
       if (typeof record.PresenceType === 'number') {
+        // Mapping non-standard codes to standard ones
+        if (record.PresenceType === 1228) return 0; // Absence
+        if (record.PresenceType === 1229) return 1; // Presence
+        if (record.PresenceType === 1231) return 2; // Late
+        
+        console.log('Using PresenceType as number:', record.PresenceType);
         return record.PresenceType;
       }
     }
     
+    // Format with presenceTypeId directly
+    if (typeof record.presenceTypeId === 'number') {
+      // Mapping non-standard codes to standard ones
+      if (record.presenceTypeId === 1228) return 0; // Absence
+      if (record.presenceTypeId === 1229) return 1; // Presence
+      if (record.presenceTypeId === 1231) return 2; // Late
+      
+      console.log('Using presenceTypeId:', record.presenceTypeId);
+      return record.presenceTypeId;
+    }
+    
     // If we have a string representation of type
     if (record.presenceType) {
+      let id = -1;
       switch (record.presenceType) {
-        case 'present': return 1;
-        case 'absent': return 0;
-        case 'late': return 2;
-        case 'excused': return 3;
-        default: return -1;
+        case 'present': id = 0; break;
+        case 'absent': id = 1; break;
+        case 'late': id = 2; break;
+        case 'excused': id = 3; break;
+        default: id = -1; break;
       }
+      console.log('Using presenceType string:', record.presenceType, '→', id);
+      return id;
     }
     
     // Check for LessonId property (characteristic for Vulcan API)
-    // If a record exists, it implies presence unless specified otherwise.
     if (record.LessonId && record.PresenceType === undefined) {
-      return 1; // Assume it's presence
+      console.log('Assuming default presence type 0 for record with LessonId');
+      return 0; // Assume it's presence by default
     }
     
     // Get ID from Type field (specific to certain API formats)
-    if (record.Type !== undefined && typeof record.Type === 'number') {
-      return record.Type;
+    if (record.Type !== undefined) {
+      console.log('Using Type field:', record.Type);
+      return typeof record.Type === 'number' ? record.Type : -1;
     }
     
-    console.log('Could not determine presence type, defaulting to 1 (present)');
-    return 1; // Default to present
+    console.log('Could not determine presence type, defaulting to 0');
+    return 0; // For this specific API we assume presence by default
   };
   
   // Getting attendance data for the current day
@@ -315,16 +343,16 @@ function Attendance() {
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Absence</div>
                   <div className="flex items-center">
-                    <div className="text-xl font-bold text-red-500 mr-2">{stats.absentPercentage}%</div>
-                    <div className="text-sm text-text-secondary">({stats.absent} of {stats.total})</div>
+                    <div className="text-xl font-bold text-red-500 mr-2">{stats.presentPercentage}%</div>
+                    <div className="text-sm text-text-secondary">({stats.present} of {stats.total})</div>
                   </div>
                 </div>
                 
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Presence</div>
                   <div className="flex items-center">
-                    <div className="text-xl font-bold text-green-500 mr-2">{stats.presentPercentage}%</div>
-                    <div className="text-sm text-text-secondary">({stats.present} of {stats.total})</div>
+                    <div className="text-xl font-bold text-green-500 mr-2">{stats.absentPercentage}%</div>
+                    <div className="text-sm text-text-secondary">({stats.absent} of {stats.total})</div>
                   </div>
                 </div>
               </div>

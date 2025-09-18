@@ -185,54 +185,45 @@ export const formatAttendance = (attendance: any): { status: string, color: stri
     // If PresenceType is an object with Id
     if (typeof attendance.PresenceType === 'object' && attendance.PresenceType !== null && 
         typeof attendance.PresenceType.Id === 'number') {
-      const id = attendance.PresenceType.Id;
-      // Mapping non-standard codes to standard ones
-      if (id === 1228) presenceTypeId = 0; // Absence
-      else if (id === 1229) presenceTypeId = 1; // Presence
-      else if (id === 1231) presenceTypeId = 2; // Late
-      else presenceTypeId = id;
+      presenceTypeId = attendance.PresenceType.Id;
+      
+      // Non-standard Vulcan API codes
+      if (presenceTypeId > 1000) {
+        // Mapping specific codes 
+        if (presenceTypeId === 1228) return { status: 'Present', color: 'text-green-500' }; // Was absence
+        if (presenceTypeId === 1229) return { status: 'Absent', color: 'text-red-500' }; // Was presence
+        if (presenceTypeId === 1231) return { status: 'Present', color: 'text-green-500' }; // Was late
+      }
     } 
     // If PresenceType is a number
     else if (typeof attendance.PresenceType === 'number') {
-      const id = attendance.PresenceType;
-      if (id === 1228) presenceTypeId = 0; // Absence
-      else if (id === 1229) presenceTypeId = 1; // Presence
-      else if (id === 1231) presenceTypeId = 2; // Late
-      else presenceTypeId = id;
+      presenceTypeId = attendance.PresenceType;
     }
   } 
   // New format: attendance.presenceTypeId
   else if (typeof attendance.presenceTypeId === 'number') {
-    const id = attendance.presenceTypeId;
-    if (id === 1228) presenceTypeId = 0; // Absence
-    else if (id === 1229) presenceTypeId = 1; // Presence
-    else if (id === 1231) presenceTypeId = 2; // Late
-    else presenceTypeId = id;
+    presenceTypeId = attendance.presenceTypeId;
   }
   
   // String format: attendance.presenceType
   else if (attendance.presenceType) {
-    if (attendance.presenceType === 'present') presenceTypeId = 1;
-    else if (attendance.presenceType === 'absent') presenceTypeId = 0;
+    if (attendance.presenceType === 'present') presenceTypeId = 0;
+    else if (attendance.presenceType === 'absent') presenceTypeId = 1;
     else if (attendance.presenceType === 'late') presenceTypeId = 2;
     else if (attendance.presenceType === 'excused') presenceTypeId = 3;
   }
   
   // Map presenceTypeId to status and color
   switch (presenceTypeId) {
-    case 1:
-      return { status: 'Present', color: 'text-green-500' };
     case 0:
+      return { status: 'Present', color: 'text-green-500' };
+    case 1:
       return { status: 'Absent', color: 'text-red-500' };
     case 2:
       return { status: 'Late', color: 'text-orange-500' };
     case 3:
       return { status: 'Excused', color: 'text-blue-500' };
     default:
-      // For Vulcan API, if a record exists without a specific type, it's a presence.
-      if (attendance.LessonId && attendance.PresenceType === undefined) {
-        return { status: 'Present', color: 'text-green-500' };
-      }
       return { status: 'Unknown', color: 'text-text-secondary' };
   }
 };
@@ -268,4 +259,4 @@ export const formatExamType = (type: string): { label: string, color: string } =
     default:
       return { label: type, color: 'bg-purple-500' };
   }
-};
+}; 
