@@ -1,8 +1,8 @@
 
 import React from 'react';
+import Card from '@/components/ui/Card';
 import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import {
   Notepad,
@@ -13,8 +13,11 @@ import {
   Info,
   CaretRight
 } from '@phosphor-icons/react';
+import { clearUserData } from '@/lib/utils/auth-utils';
+import { useApiap } from '@/context/ApiapContext';
 
 const More: React.FC = () => {
+  const { clearApiap } = useApiap();
   const menuItems = [
     {
       title: 'Homework',
@@ -57,13 +60,20 @@ const More: React.FC = () => {
   ];
 
   const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem('vulcanData');
-    localStorage.removeItem('apiap');
-    localStorage.removeItem('userData');
-    
-    // Redirect to login
-    window.location.href = '/';
+    try {
+      // First clear the APIAP context to release memory
+      clearApiap();
+      
+      // Then clear localStorage
+      clearUserData();
+      
+      // Simple redirect instead of the complex approach
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Fallback if the normal logout fails
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -140,7 +150,7 @@ const More: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.6 }}
+            transition={{ duration: 0.3, delay: (menuItems.length + otherItems.length) * 0.1 }}
           >
             <Card 
               className="p-4 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer border-red-200 dark:border-red-800"

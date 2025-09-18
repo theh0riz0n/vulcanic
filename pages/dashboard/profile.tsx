@@ -298,7 +298,7 @@ function Profile() {
                   <Gift size={16} className="mr-2 text-primary" />
                   <span>App Version</span>
                 </div>
-                <div className="text-text-secondary font-mono">9182025.3</div>
+                <div className="text-text-secondary font-mono">9182025.4</div>
               </div>
             </div>
           </Card>
