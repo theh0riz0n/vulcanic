@@ -165,7 +165,7 @@ function Settings() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Snowflake size={20} className="mr-2 text-primary" />
-                  <span>{t('settings.snowflakesEffect')}</span>
+                  <span>{t('settings.snowflakes')}</span>
                 </div>
                 <label className="inline-flex items-center cursor-pointer">
                   <input 
