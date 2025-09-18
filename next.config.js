@@ -10,15 +10,12 @@ const withPWA = require('next-pwa')({
 const { version } = require('./package.json');
 const { execSync } = require('child_process');
 
-// Get latest git commit message
-let latestCommit = 'No recent changes to display.';
+let latestCommit = 'No commit message found.';
 try {
-  // This command gets the subject and body of the latest commit
   latestCommit = execSync('git log -1 --pretty=%B').toString().trim();
-} catch (e) {
-  console.error('Could not get last commit message:', e.message);
+} catch (error) {
+  console.error('Failed to get latest git commit message:', error.message);
 }
-
 
 const nextConfig = {
   reactStrictMode: true,

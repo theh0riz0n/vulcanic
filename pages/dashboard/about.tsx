@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { motion } from 'framer-motion';
@@ -15,16 +15,50 @@ import {
   GithubLogo
 } from '@phosphor-icons/react';
 import { getUserData } from '@/lib/utils/auth-utils';
+import WhatsNewModal from '@/components/ui/WhatsNewModal';
 
 const About: React.FC = () => {
-  const userData = {
-    id: 'N/A',
-    unitId: 'N/A'
-  };
+  const [userData, setUserData] = useState({ id: 'N/A', unitId: 'N/A' });
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+
+  useEffect(() => {
+    const data = getUserData();
+    if (data) {
+      setUserData({
+        id: data.email || 'N/A',
+        unitId: 'N/A', // unitId is not available in user data
+      });
+    }
+  }, []);
+
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0';
+  const changelog = process.env.NEXT_PUBLIC_LATEST_COMMIT_MESSAGE || 'No changes to display.';
 
   return (
     <DashboardLayout title="About">
       <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="p-6">
+            <h3 className="text-lg font-mono font-bold mb-4 flex items-center">
+              <Gift size={22} className="mr-2 text-primary" />
+              What's New
+            </h3>
+            <div className="text-sm text-text-secondary space-y-2">
+              <p>Current version: {appVersion}</p>
+              <button
+                onClick={() => setIsWhatsNewOpen(true)}
+                className="font-semibold text-primary hover:underline"
+              >
+                View latest changes
+              </button>
+            </div>
+          </Card>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -85,6 +119,12 @@ const About: React.FC = () => {
           </Card>
         </motion.div>
       </div>
+      <WhatsNewModal
+        isOpen={isWhatsNewOpen}
+        onClose={() => setIsWhatsNewOpen(false)}
+        version={appVersion}
+        changelog={changelog}
+      />
     </DashboardLayout>
   );
 };
