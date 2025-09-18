@@ -133,8 +133,22 @@ function Schedule() {
           } 
           else if (typeof substitution.Date === 'string') {
             substitutionDate = substitution.Date.split('T')[0];
+          } else if (substitution.Date instanceof Date) {
+            substitutionDate = substitution.Date.toISOString().split('T')[0];
+          } else if (substitution.Date && typeof substitution.Date === 'object') {
+            try {
+              const year = substitution.Date.Year || substitution.Date.year;
+              const month = (substitution.Date.Month || substitution.Date.month) - 1;
+              const day = substitution.Date.Day || substitution.Date.day;
+              
+              if (year && month !== undefined && day) {
+                const date = new Date(year, month, day);
+                substitutionDate = date.toISOString().split('T')[0];
+              }
+            } catch (e) {
+              console.error('Failed to parse substitution date:', e);
+            }
           }
-          // ... other existing date extraction logic ...
         }
         
         return substitutionDate === selectedDateStr;
@@ -161,6 +175,15 @@ function Schedule() {
           );
           
           if (existingLessonIndex >= 0) {
+            // If the existing lesson is already a substitution, check which one to keep.
+            // A moved lesson (Change.Type === 2) should override a canceled one (Change.Type === 1).
+            const existingLesson = enhancedLessons[existingLessonIndex];
+            if (existingLesson.isSubstitution && substitution.Change?.Type === 1 && existingLesson.Change?.Type === 2) {
+              // The existing lesson is a "moved" lesson, and the new one is "canceled".
+              // We keep the "moved" lesson, so we do nothing here.
+              return;
+            }
+
             // Replace the existing lesson with this substitution but keep original info
             const originalInfo = enhancedLessons[existingLessonIndex];
             
@@ -205,8 +228,41 @@ function Schedule() {
         }
       });
       
+      // Remove duplicate lessons when both canceled and moved exist for same position
+      // Group lessons by their time slot position
+      const groupedByPosition = enhancedLessons.reduce((acc, lesson) => {
+        const position = lesson.TimeSlot?.Position ?? 'no_position';
+        if (!acc[position]) {
+          acc[position] = [];
+        }
+        acc[position].push(lesson);
+        return acc;
+      }, {});
+      
+      // For each group, if there are both canceled and moved lessons, keep only moved
+      const filteredEnhancedLessons: any[] = [];
+      Object.values(groupedByPosition).forEach((positionGroup: any) => {
+        if (positionGroup.length > 1) {
+          // Check if we have both canceled and moved lessons
+          const hasCanceled = positionGroup.some((l: any) => l.Change?.Type === 1);
+          const hasMoved = positionGroup.some((l: any) => l.Change?.Type === 2);
+          
+          if (hasCanceled && hasMoved) {
+            // Keep only moved lessons
+            const movedLessons = positionGroup.filter((l: any) => l.Change?.Type === 2);
+            filteredEnhancedLessons.push(...movedLessons);
+          } else {
+            // Keep all lessons in the group
+            filteredEnhancedLessons.push(...positionGroup);
+          }
+        } else {
+          // Only one lesson in group, keep it
+          filteredEnhancedLessons.push(...positionGroup);
+        }
+      });
+      
       // Sort by time
-      const sorted = enhancedLessons.sort((a, b) => {
+      const sorted = filteredEnhancedLessons.sort((a, b) => {
         // Use TimeSlot.Position for sorting if available
         if (a.TimeSlot && b.TimeSlot) {
           if (a.TimeSlot.Position !== undefined && b.TimeSlot.Position !== undefined) {
@@ -497,6 +553,7 @@ function Schedule() {
 
                 // Substitution information
                 const isSubstitution = lesson.isSubstitution || false;
+                const isCanceled = lesson.isCanceled || false;
                 const substitutionReason = lesson.substitutionReason || '';
                 let changeType = '';
                 
@@ -524,7 +581,7 @@ function Schedule() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <Card className={`p-4 ${isSubstitution ? 'border-l-4 border-warning' : ''}`}>
+                    <Card className={`p-4 ${isSubstitution ? 'border-l-4 border-warning' : isCanceled ? 'border-l-4 border-danger' : ''}`}>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -534,6 +591,11 @@ function Schedule() {
                             {isSubstitution && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-warning text-white">
                                 {substitutionReason || changeType || 'Substitution'}
+                              </span>
+                            )}
+                            {isCanceled && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-danger text-white">
+                                Canceled
                               </span>
                             )}
                           </div>
@@ -562,7 +624,10 @@ function Schedule() {
                           </div>
                         </div>
                         
-                        <div className="bg-surface px-3 py-1 rounded-full text-text-secondary text-sm whitespace-nowrap ml-2">
+                        <div className={`px-3 py-1 rounded-full text-text-secondary text-sm whitespace-nowrap ml-2 ${
+                          isCanceled ? 'bg-danger text-white' : 
+                          isSubstitution ? 'bg-warning text-white' : 'bg-surface'
+                        }`}>
                           {timeDisplay}
                           {isSubstitution && lesson.originalSubject && 
                             lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson && 
@@ -585,4 +650,4 @@ function Schedule() {
   );
 }
 
-export default withAuth(Schedule); 
+export default withAuth(Schedule);

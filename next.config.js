@@ -7,6 +7,16 @@ const withPWA = require('next-pwa')({
   buildExcludes: ["app-build-manifest.json"],
 });
 
+const { version } = require('./package.json');
+const { execSync } = require('child_process');
+
+let latestCommit = 'No commit message found.';
+try {
+  latestCommit = execSync('git log -1 --pretty=%B').toString().trim();
+} catch (error) {
+  console.error('Failed to get latest git commit message:', error.message);
+}
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -15,6 +25,10 @@ const nextConfig = {
   },
   compiler: {
     styledComponents: true,
+  },
+  env: {
+    NEXT_PUBLIC_APP_VERSION: version,
+    NEXT_PUBLIC_LATEST_COMMIT_MESSAGE: latestCommit,
   },
   
   // Add configuration to resolve issues with fs and other Node.js modules
