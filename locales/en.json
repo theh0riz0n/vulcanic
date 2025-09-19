@@ -43,6 +43,7 @@
   "dashboard.messages": "Messages",
   "dashboard.viewAll": "View all",
   "settings.title": "Settings",
+  "settings.appSettings": "App Settings",
   "settings.theme": "Theme",
   "settings.themeMode": "Theme Mode",
   "settings.dark": "Dark",
