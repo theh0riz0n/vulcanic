@@ -58,7 +58,7 @@ function Settings() {
         transition={{ duration: 0.5 }}
         className="space-y-6"
       >
-        <h1 className="text-2xl font-mono font-bold">{t('settings.appSettings')}</h1>
+        <h1 className="text-2xl font-mono font-bold">{t(settings.appSettings)}</h1>
         <Card className="p-6">
           <div className="space-y-6">
             <div className="space-y-2">

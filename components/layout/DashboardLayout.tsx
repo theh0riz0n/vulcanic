@@ -1,6 +1,8 @@
 import React, { ReactNode, useEffect, useState } from 'react';
-import BottomNavigation from './BottomNavigation';
 import { motion } from 'framer-motion';
+import BottomNavigation from './BottomNavigation';
+import SideNavigation from './SideNavigation';
+import axios from 'axios';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -9,6 +11,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) => {
   const [isNavigating, setIsNavigating] = useState(false);
+  const [hasSubstitutions, setHasSubstitutions] = useState(false);
   
   // Listen for navigation events
   useEffect(() => {
@@ -34,6 +37,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
     }
     
     return undefined;
+  }, []);
+
+  // Check for substitutions
+  useEffect(() => {
+    const checkTodaySubstitutions = async () => {
+      try {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        
+        const response = await axios.get(`/api/vulcan/substitutions?startDate=${dateStr}&endDate=${dateStr}`);
+        
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          setHasSubstitutions(true);
+        } else {
+          setHasSubstitutions(false);
+        }
+      } catch (error) {
+        console.error('Error checking substitutions:', error);
+        setHasSubstitutions(false);
+      }
+    };
+    
+    checkTodaySubstitutions();
   }, []);
   
   // Hide any errors that occur during navigation
@@ -66,7 +92,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
   }, [isNavigating]);
   
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-20">
+    <div className="min-h-screen flex flex-col bg-background md:pl-20 pb-20 md:pb-0">
+      {/* Side Navigation for Desktop */}
+      <div className="hidden md:block">
+        <SideNavigation hasSubstitutions={hasSubstitutions} />
+      </div>
+
       {title && (
         <header className="sticky top-0 z-40 blur-backdrop py-4 shadow-sm">
           <div className="max-w-screen-lg mx-auto px-4">
@@ -90,9 +121,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
         </div>
       </motion.main>
       
-      <BottomNavigation />
+      {/* Bottom Navigation for Mobile */}
+      <div className="md:hidden">
+        <BottomNavigation />
+      </div>
     </div>
   );
 };
 
-export default DashboardLayout; 
+export default DashboardLayout;
