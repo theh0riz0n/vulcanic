@@ -27,6 +27,14 @@ import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColo
 import { useApiap } from '@/context/ApiapContext';
 import { useLanguage } from '@/context/LanguageContext';
 
+/**
+ * Renders the user profile page.
+ * This component displays user information, provides application settings
+ * such as theme mode, accent color, background color, and special effects.
+ * It also includes functionality for the user to log out.
+ *
+ * @returns {JSX.Element} The rendered profile page component within a DashboardLayout.
+ */
 function Profile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -288,4 +296,4 @@ function Profile() {
   );
 }
 
-export default withAuth(Profile); 
+export default withAuth(Profile);

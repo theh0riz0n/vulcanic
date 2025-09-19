@@ -11,9 +11,11 @@ import {
   Sun,
   Snowflake,
   Palette,
-  Translate
+  Translate,
+  CaretRight
 } from '@phosphor-icons/react';
 import { useLanguage } from '@/context/LanguageContext';
+import LanguageModal from '@/components/ui/LanguageModal';
 
 function Settings() {
   const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
@@ -29,6 +31,7 @@ function Settings() {
   
   const [colorChanged, setColorChanged] = useState(false);
   const [bgChanged, setBgChanged] = useState(false);
+  const [isLanguageModalOpen, setLanguageModalOpen] = useState(false);
 
   // Handle color change with feedback
   const handleColorChange = (color: string) => {
@@ -58,7 +61,7 @@ function Settings() {
         transition={{ duration: 0.5 }}
         className="space-y-6"
       >
-        <h1 className="text-2xl font-mono font-bold">{t(settings.appSettings)}</h1>
+        <h1 className="text-2xl font-mono font-bold">{t('settings.appSettings')}</h1>
         <Card className="p-6">
           <div className="space-y-6">
             <div className="space-y-2">
@@ -150,14 +153,13 @@ function Settings() {
                   <Translate size={20} className="mr-2 text-primary" />
                   <span>{t('settings.language')}</span>
                 </div>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as any)}
-                  className="bg-surface border border-border rounded px-3 py-1 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                <button
+                  onClick={() => setLanguageModalOpen(true)}
+                  className="flex items-center gap-2 bg-surface border border-border rounded px-3 py-1 text-text-primary hover:bg-border transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="en">English</option>
-                  <option value="pl">Polski</option>
-                </select>
+                  <span>{language === 'en' ? 'English' : 'Polski'}</span>
+                  <CaretRight size={16} />
+                </button>
               </div>
             </div>
 
@@ -181,6 +183,12 @@ function Settings() {
           </div>
         </Card>
       </motion.div>
+      <LanguageModal
+        isOpen={isLanguageModalOpen}
+        onClose={() => setLanguageModalOpen(false)}
+        onSelect={setLanguage}
+        currentLanguage={language}
+      />
     </DashboardLayout>
   );
 }
