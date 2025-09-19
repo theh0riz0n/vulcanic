@@ -1,7 +1,5 @@
 # vulcanic - custom client for eduvulcan
-🔗 App: https://vulcanic.vercel.app/
 
-🔗 Discord: https://discord.gg/4RNJpZ3bqb
 ## todo
 
 - [x] api/ap auth system
@@ -48,3 +46,4 @@
 - `/lib` - utilities and hooks
 - `/styles` - styles and css
 - `/public` - static files
+- `/locales` - language packs

@@ -134,26 +134,28 @@ function Attendance() {
     
     const total = filteredAttendance.length;
     
-    // For compatibility we check both possible formats of attendance data
-    const present = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
-      return typeId === 1;
-    }).length;
-    
-    const absent = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
-      return typeId === 0;
-    }).length;
-    
-    const late = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
-      return typeId === 2;
-    }).length;
-    
-    const excused = filteredAttendance.filter(a => {
-      const typeId = getPresenceTypeId(a);
-      return typeId === 3;
-    }).length;
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    let excused = 0;
+
+    filteredAttendance.forEach(a => {
+      const { status } = formatAttendance(a);
+      switch (status) {
+        case 'Present':
+          present++;
+          break;
+        case 'Absent':
+          absent++;
+          break;
+        case 'Late':
+          late++;
+          break;
+        case 'Excused':
+          excused++;
+          break;
+      }
+    });
     
     // Make sure percentage sum doesn't exceed 100%
     const calculatedTotal = present + absent + late + excused;
@@ -225,15 +227,16 @@ function Attendance() {
   }, [filteredAttendance]);
   
   // Get icon based on attendance type
-  const getAttendanceIcon = (presenceTypeId: number) => {
-    switch (presenceTypeId) {
-      case 0: // Present
+  const getAttendanceIcon = (attendanceRecord: any) => {
+    const { status } = formatAttendance(attendanceRecord);
+    switch (status) {
+      case 'Present':
         return <CheckCircle size={20} weight="fill" className="text-green-500" />;
-      case 1: // Absent
+      case 'Absent':
         return <XCircle size={20} weight="fill" className="text-red-500" />;
-      case 2: // Late
+      case 'Late':
         return <Clock size={20} weight="fill" className="text-orange-500" />;
-      case 3: // Excused
+      case 'Excused':
         return <CheckCircle size={20} weight="fill" className="text-blue-500" />;
       default:
         return <XCircle size={20} weight="fill" className="text-text-secondary" />;
@@ -369,7 +372,7 @@ function Attendance() {
                           <Card className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="flex-shrink-0">
-                                {getAttendanceIcon(presenceTypeId)}
+                                {getAttendanceIcon(record)}
                               </div>
                               
                               <div className="flex-1">

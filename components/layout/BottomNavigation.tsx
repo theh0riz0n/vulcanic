@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { navItems } from './navItems'; // Import shared nav items
-import { motion } from 'framer-motion';
-import {
-  Calendar,
-  GraduationCap,
-  House,
-  DotsThree,
-  Warning
-} from '@phosphor-icons/react';
+import { useLanguage } from '@/context/LanguageContext';
+import { House, Calendar, Barbell, Backpack, User, Warning } from '@phosphor-icons/react';
 
 const BottomNavigation: React.FC = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [hasSubstitutions, setHasSubstitutions] = useState(false);
+
+  const navItems = [
+    { name: t('nav.dashboard'), href: '/dashboard', icon: House },
+    { name: t('nav.schedule'), href: '/dashboard/schedule', icon: Calendar, checkSubstitutions: true },
+    { name: t('nav.grades'), href: '/dashboard/grades', icon: Barbell },
+    { name: t('nav.homework'), href: '/dashboard/homework', icon: Backpack },
+    { name: t('nav.profile'), href: '/dashboard/profile', icon: User },
+  ];
 
   // Log current path for debugging
   useEffect(() => {
@@ -88,9 +90,9 @@ const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 blur-backdrop py-1 shadow-elevation md:static md:flex md:w-64 md:flex-col md:h-full md:py-4 md:px-2">
-      <nav className="max-w-screen-lg mx-auto px-2 md:mx-0 md:px-0">
-        <ul className="flex justify-around items-center md:flex-col md:space-y-2 md:items-start">
+    <div className="fixed bottom-0 left-0 right-0 z-50 blur-back backdrop py-1 shadow-elevation">
+      <nav className="max-w-screen-lg mx-auto px-2">
+        <ul className="flex justify-around items-center">
           {navItems.map((item) => {
             // Определить активность пути более гибко
             const isActive = router.pathname === item.href || 
@@ -102,6 +104,7 @@ const BottomNavigation: React.FC = () => {
                   href={item.href}
                   className={`nav-item ${isActive ? 'active' : ''}`}
                   onClick={handleNavigation(item.href)}
+                  title={item.checkSubstitutions && hasSubstitutions ? t('schedule.changes_detected') : item.name}
                 >
                   <div className={`icon-container ${isActive ? 'active' : ''}`}>
                     <item.icon 
@@ -112,7 +115,7 @@ const BottomNavigation: React.FC = () => {
                       <span className="absolute -top-1 -right-2 w-2 h-2 bg-warning rounded-full"></span>
                     )}
                   </div>
-                  <span className="text-xs mt-1 font-medium md:hidden">{item.name}</span>
+                  <span className="text-xs mt-1 font-medium">{item.name}</span>
                 </a>
               </li>
             );
