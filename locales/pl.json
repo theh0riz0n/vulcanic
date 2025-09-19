@@ -94,5 +94,9 @@
   "homework.noHomework": "Nie znaleziono zadań domowych.",
   "homework.subject": "Przedmiot",
   "homework.teacher": "Nauczyciel",
-  "homework.dueDate": "Termin oddania"
+  "homework.dueDate": "Termin oddania",
+  "greeting.night": "Miłej nocy",
+  "greeting.morning": "Dzień dobry",
+  "greeting.afternoon": "Dzień dobry",
+  "greeting.evening": "Dobry wieczór"
 }
