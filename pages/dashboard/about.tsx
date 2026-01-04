@@ -12,7 +12,8 @@ import {
   Buildings,
   Code,
   Heart,
-  GithubLogo
+  GithubLogo,
+  Warning
 } from '@phosphor-icons/react';
 import { getUserData } from '@/lib/utils/auth-utils';
 import WhatsNewModal from '@/components/ui/WhatsNewModal';
@@ -49,6 +50,17 @@ const About: React.FC = () => {
             </h3>
             <div className="text-sm text-text-secondary space-y-2">
               <p>Current version: {appVersion}</p>
+              {appVersion.endsWith('b') && (
+                <div className="p-3 my-2 border-l-4 border-yellow-500 bg-yellow-500/10 rounded-r-md">
+                  <p className="flex items-center font-bold text-yellow-500 mb-1">
+                    <Warning size={18} className="mr-2" />
+                    Unstable Build
+                  </p>
+                  <p className="text-xs">
+                    The build of the journal ({appVersion}) may be unstable.
+                  </p>
+                </div>
+              )}
               <button
                 onClick={() => setIsWhatsNewOpen(true)}
                 className="font-semibold text-primary hover:underline"
@@ -106,9 +118,9 @@ const About: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <GithubLogo size={16} className="mr-2" />
-                <a 
-                  href="https://github.com/theh0riz0n/vulcanic" 
-                  target="_blank" 
+                <a
+                  href="https://github.com/theh0riz0n/vulcanic"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >

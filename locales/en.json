@@ -1,4 +1,3 @@
-
 {
   "theme": "Theme",
   "dark": "Dark",
@@ -88,8 +87,21 @@
   "homework.subject": "Subject",
   "homework.teacher": "Teacher",
   "homework.dueDate": "Due Date",
-   "greeting.night": "Good night",
+  "greeting.night": "Good night",
   "greeting.morning": "Good morning",
   "greeting.afternoon": "Good day",
-  "greeting.evening": "Good evening"
+  "greeting.evening": "Good evening",
+  "app_settings": "App Settings",
+  "theme_mode": "Theme Mode",
+  "accent_color": "Accent Color",
+  "background_color": "Background Color",
+  "snowflakes_effect": "Snowflakes Effect",
+  "snowflake_intensity": "Snowflake Intensity",
+  "log_out": "Log Out",
+  "logging_out": "Logging out...",
+  "color_updated": "Color updated!",
+  "background_updated": "Background updated!",
+  "set_as_accent_color": "Set as accent color",
+  "set_background": "Set background",
+  "nav.more": "More"
 }

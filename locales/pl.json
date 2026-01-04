@@ -1,4 +1,3 @@
-
 {
   "dashboard.title": "Panel",
   "schedule.title": "Plan lekcji",
@@ -98,5 +97,18 @@
   "greeting.night": "Miłej nocy",
   "greeting.morning": "Dzień dobry",
   "greeting.afternoon": "Dzień dobry",
-  "greeting.evening": "Dobry wieczór"
+  "greeting.evening": "Dobry wieczór",
+  "app_settings": "Ustawienia aplikacji",
+  "theme_mode": "Tryb motywu",
+  "accent_color": "Kolor akcentu",
+  "background_color": "Kolor tła",
+  "snowflakes_effect": "Efekt płatków śniegu",
+  "snowflake_intensity": "Intensywność płatków śniegu",
+  "log_out": "Wyloguj się",
+  "logging_out": "Wylogowywanie...",
+  "color_updated": "Kolor zaktualizowany!",
+  "background_updated": "Tło zaktualizowane!",
+  "set_as_accent_color": "Ustaw jako kolor akcentu",
+  "set_background": "Ustaw tło",
+  "nav.more": "Więcej"
 }
