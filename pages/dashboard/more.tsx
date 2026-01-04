@@ -84,10 +84,7 @@ function More() {
         icon: Info,
         color: 'text-blue-500',
         bgColor: 'bg-blue-500/10',
-        title: 'About', // Using hardcoded or need a key? about.tsx uses "About". 'nav.about' doesnt exist but 'profile_title' was used. I'll use hardcoded or t('settings.appSettings')? No, 'About' page. Let's use hardcoded "About" or add key. En.json had 'About' in body. I'll use "About" but `t('more.about.desc')` exists.
-        // Wait, looking at en.json, line 20: "profile_title": "Profile". 
-        // I will just use "About" string for title as existing about.tsx uses explicit string. Or I can use t('nav.more') but that's More.
-        // Actually, about.tsx uses Title="About".
+        title: t('about.title'),
         description: t('more.about.desc'),
         href: '/dashboard/about'
       }

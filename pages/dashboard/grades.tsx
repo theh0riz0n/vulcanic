@@ -68,13 +68,13 @@ function Grades() {
     if (!grades || !grades.length) return [];
 
     console.log('Начинаю группировку оценок');
-    
+
     const subjectsMap = new Map<string, SubjectWithGrades>();
 
     grades.forEach((grade: Grade) => {
       // Используем Column.Subject вместо grade.Subject, если доступно
       let subject = grade.Column?.Subject || grade.Subject;
-      
+
       // Проверяем, является ли subject объектом и преобразуем его в строку при необходимости
       if (subject && typeof subject === 'object') {
         console.log('Subject - это объект:', subject);
@@ -86,12 +86,12 @@ function Grades() {
           subject = JSON.stringify(subject);
         }
       }
-      
+
       if (!subject) {
         console.log('Оценка без предмета:', grade);
         return;
       }
-      
+
       if (!subjectsMap.has(subject)) {
         subjectsMap.set(subject, {
           name: subject,
@@ -102,19 +102,41 @@ function Grades() {
 
       subjectsMap.get(subject)?.grades.push(grade);
     });
-    
-    // Расчет средних оценок
+
+    // Calculate averages
     subjectsMap.forEach(subject => {
       const numericGrades = subject.grades
-        .filter((g: Grade) => g.Value && !isNaN(parseFloat(String(g.Value))))
-        .map((g: Grade) => parseFloat(String(g.Value)));
-      
+        .filter((g: Grade) => {
+          if (!g.Value) return false;
+          // Normalize value string
+          const valStr = String(g.Value).replace(',', '.');
+          const val = parseFloat(valStr);
+
+          if (isNaN(val)) return false;
+
+          const content = String(g.Content || '');
+          const contentRaw = String(g.ContentRaw || '');
+
+          // Exclude percentages and points (> 6.5)
+          // Also explicitly check % char
+          if (content.includes('%') || contentRaw.includes('%') || val > 6.5) {
+            return false;
+          }
+
+          // Standard grades strictly 1-6.5
+          return val >= 1 && val <= 6.5;
+        })
+        .map((g: Grade) => {
+          const valStr = String(g.Value).replace(',', '.');
+          return parseFloat(valStr);
+        });
+
       if (numericGrades.length > 0) {
         const sum = numericGrades.reduce((a: number, b: number) => a + b, 0);
         subject.average = +(sum / numericGrades.length).toFixed(2);
       }
     });
-    
+
     console.log('Результат группировки:', Array.from(subjectsMap.values()));
     return Array.from(subjectsMap.values());
   }, [grades]);
@@ -124,14 +146,14 @@ function Grades() {
     if (!subjectGrades.length) return [];
 
     let filtered = subjectGrades;
-    
+
     // Фильтрация по поисковому запросу
     if (searchTerm) {
       filtered = filtered.filter(subject =>
         subject.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     // Сортировка
     return filtered.sort((a: SubjectWithGrades, b: SubjectWithGrades) => {
       if (sortCriteria === 'name') {
@@ -251,8 +273,8 @@ function Grades() {
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-overlay">
                         <h3 className="font-medium text-lg">{
                           // Ensure subject name is always a string
-                          typeof subject.name === 'string' 
-                            ? subject.name 
+                          typeof subject.name === 'string'
+                            ? subject.name
                             : (typeof subject.name === 'object' && subject.name !== null)
                               ? JSON.stringify(subject.name)
                               : 'Unknown Subject'
