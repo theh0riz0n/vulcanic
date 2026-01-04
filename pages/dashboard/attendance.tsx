@@ -1,78 +1,151 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import Card from '@/components/ui/Card';
-import Loading from '@/components/ui/Loading';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
-import { useCurrentDayData } from '@/lib/hooks/useVulcanData';
 import { formatDate, formatTime, formatAttendance, parseDate, parseTime } from '@/lib/utils/formatters';
-import { motion } from 'framer-motion';
+import Loading from '@/components/ui/Loading';
+import Card from '@/components/ui/Card';
+import { useQuery } from 'react-query';
+import axios from 'axios';
 import { 
   CheckCircle, 
   XCircle, 
   Clock, 
   ChartPie, 
-  Calendar
+  Calendar,
+  CaretLeft,
+  CaretRight
 } from '@phosphor-icons/react';
-import withAuth from '@/lib/utils/withAuth';
+import React, { useState, useMemo, useEffect } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { motion } from 'framer-motion';
+
+// Helper to format date to YYYY-MM-DD
+const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 function Attendance() {
-  // Remove monthly navigation and store only today's date
-  const today = useMemo(() => new Date(), []);
-  const formattedToday = useMemo(() => {
-    return today.toLocaleDateString('en-US', { 
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const formattedCurrentDate = useMemo(() => {
+    return currentDate.toLocaleDateString('en-US', { 
       day: 'numeric',
       month: 'long', 
       year: 'numeric' 
     });
-  }, [today]);
+  }, [currentDate]);
+
+  const handlePrevDay = () => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() - 1);
+      return newDate;
+    });
+  };
+
+  const handleNextDay = () => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() + 1);
+      return newDate;
+    });
+  };
   
   // Getting attendance type from different data formats
   const getPresenceTypeId = (record: any): number => {
-    // Format with presenceTypeId directly
-    if (typeof record.presenceTypeId === 'number') {
-      return record.presenceTypeId;
-    }
-
     if (record.PresenceType) {
       // Check if PresenceType is an object with Id property
-      if (typeof record.PresenceType === 'object' && record.PresenceType !== null && typeof record.PresenceType.Id === 'number') {
-        return record.PresenceType.Id;
+      if (typeof record.PresenceType === 'object' && record.PresenceType !== null) {
+        if (typeof record.PresenceType.Id === 'number') {
+          // Mapping non-standard codes to standard ones
+          if (record.PresenceType.Id === 1228) return 0; // Absence
+          if (record.PresenceType.Id === 1229) return 1; // Presence
+          if (record.PresenceType.Id === 1231) return 2; // Late
+          
+          console.log('Using PresenceType.Id:', record.PresenceType.Id);
+          return record.PresenceType.Id;
+        } else if (record.PresenceType.Type !== undefined) {
+          // In some API responses there might be a Type field instead of Id
+          console.log('Using PresenceType.Type:', record.PresenceType.Type);
+          return record.PresenceType.Type;
+        }
       }
       
       // If PresenceType is a number
       if (typeof record.PresenceType === 'number') {
+        // Mapping non-standard codes to standard ones
+        if (record.PresenceType === 1228) return 0; // Absence
+        if (record.PresenceType === 1229) return 1; // Presence
+        if (record.PresenceType === 1231) return 2; // Late
+        
+        console.log('Using PresenceType as number:', record.PresenceType);
         return record.PresenceType;
       }
     }
     
+    // Format with presenceTypeId directly
+    if (typeof record.presenceTypeId === 'number') {
+      // Mapping non-standard codes to standard ones
+      if (record.presenceTypeId === 1228) return 0; // Absence
+      if (record.presenceTypeId === 1229) return 1; // Presence
+      if (record.presenceTypeId === 1231) return 2; // Late
+      
+      console.log('Using presenceTypeId:', record.presenceTypeId);
+      return record.presenceTypeId;
+    }
+    
     // If we have a string representation of type
     if (record.presenceType) {
+      let id = -1;
       switch (record.presenceType) {
-        case 'present': return 1;
-        case 'absent': return 0;
-        case 'late': return 2;
-        case 'excused': return 3;
-        default: return -1;
+        case 'present': id = 0; break;
+        case 'absent': id = 1; break;
+        case 'late': id = 2; break;
+        case 'excused': id = 3; break;
+        default: id = -1; break;
       }
+      console.log('Using presenceType string:', record.presenceType, '→', id);
+      return id;
     }
     
     // Check for LessonId property (characteristic for Vulcan API)
-    // If a record exists, it implies presence unless specified otherwise.
     if (record.LessonId && record.PresenceType === undefined) {
-      return 1; // Assume it's presence
+      console.log('Assuming default presence type 0 for record with LessonId');
+      return 0; // Assume it's presence by default
     }
     
     // Get ID from Type field (specific to certain API formats)
-    if (record.Type !== undefined && typeof record.Type === 'number') {
-      return record.Type;
+    if (record.Type !== undefined) {
+      console.log('Using Type field:', record.Type);
+      return typeof record.Type === 'number' ? record.Type : -1;
     }
     
-    console.log('Could not determine presence type, defaulting to 1 (present)');
-    return 1; // Default to present
+    console.log('Could not determine presence type, defaulting to 0');
+    return 0; // For this specific API we assume presence by default
   };
   
-  // Getting attendance data for today
-  const { data: attendance, isLoading, error } = useCurrentDayData('attendance');
+  // Getting attendance data for the current day
+  const { data: attendance, isLoading, error } = useQuery(['attendance', toYYYYMMDD(currentDate)], async () => {
+    const dateStr = toYYYYMMDD(currentDate);
+    const { data } = await axios.get('/api/vulcan/attendance', {
+      params: { startDate: dateStr, endDate: dateStr },
+    });
+    return data;
+  });
+
+  // Fetch all attendance data since Sep 2 for average calculation
+  const { data: allAttendance } = useQuery('allAttendance', async () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    // School year starts in September (month 8)
+    const schoolYearStartYear = currentMonth >= 8 ? currentYear : currentYear - 1;
+    const startDate = new Date(schoolYearStartYear, 8, 2); // September 2nd
+
+    const { data } = await axios.get('/api/vulcan/attendance', {
+      params: {
+        startDate: toYYYYMMDD(startDate),
+        endDate: toYYYYMMDD(today),
+      },
+    });
+    return data;
+  });
   
   // Debug received data
   useEffect(() => {
@@ -82,32 +155,12 @@ function Attendance() {
       console.log('All keys of first record:', Object.keys(attendance[0]));
       
       // Check record dates for debugging
-      const todayStr = today.toISOString().split('T')[0];
-      attendance.forEach((record, index) => {
-        let recordDate = '';
-        if (record.Date) {
-          if (typeof record.Date === 'string') {
-            recordDate = record.Date.split('T')[0];
-          } else if (record.Date instanceof Date) {
-            recordDate = record.Date.toISOString().split('T')[0];
-          } else if (typeof record.Date === 'object') {
-            const dateObj = parseDate(record.Date);
-            if (dateObj) {
-              recordDate = dateObj.toISOString().split('T')[0];
-            }
-          }
-        } else if (record.Lesson && record.Lesson.Date) {
-          const dateObj = parseDate(record.Lesson.Date);
-          if (dateObj) {
-            recordDate = dateObj.toISOString().split('T')[0];
-          }
-        }
-        if (recordDate) {
-          console.log(`Record ${index}: date = ${recordDate}, today = ${todayStr}, match: ${recordDate === todayStr}`);
-        }
+      const todayStr = currentDate.toISOString().split('T')[0];
+      attendance.forEach((record: any, index: number) => {
+        // ... rest of the code
       });
     }
-  }, [attendance, today]);
+  }, [attendance, currentDate]);
   
   // Use all attendance data without filtering by day
   const filteredAttendance = useMemo(() => {
@@ -171,6 +224,17 @@ function Attendance() {
       latePercentage: calculatedTotal ? Math.round((late / calculatedTotal) * 100) : 0
     };
   }, [filteredAttendance]);
+
+  const averagePresence = useMemo(() => {
+    if (!allAttendance || !allAttendance.length) return 0;
+
+    const totalLessons = allAttendance.length;
+    const presentLessons = allAttendance.filter((a: any) => getPresenceTypeId(a) === 1).length;
+
+    if (totalLessons === 0) return 0;
+
+    return Math.round((presentLessons / totalLessons) * 100);
+  }, [allAttendance]);
   
   // Group attendance by day
   const groupedByDay = useMemo(() => {
@@ -179,7 +243,7 @@ function Attendance() {
     const grouped = new Map();
     
     // Check for Date or Lesson.Date field in any record
-    const hasDates = filteredAttendance.some(record => 
+    const hasDates = filteredAttendance.some((record: any) => 
       record.Date || 
       record.date || 
       (record.Lesson && record.Lesson.Date)
@@ -192,7 +256,7 @@ function Attendance() {
       grouped.set('Today', filteredAttendance);
     } else {
       // Group by date
-      filteredAttendance.forEach(record => {
+      filteredAttendance.forEach((record: any) => {
         // Format date using our enhanced function
         let date = 'Today'; // Use "Today" as default instead of "No date"
         
@@ -248,16 +312,22 @@ function Attendance() {
       {isLoading ? (
         <Loading text="Loading attendance data..." />
       ) : error ? (
-        <ErrorDisplay message={error.message} />
+        <ErrorDisplay message={(error as any).message} />
       ) : (
         <>
           <div className="mb-5">
             {/* Replace month navigation with a simple header with today's date */}
             <div className="flex justify-center items-center mb-4">
-              <h2 className="font-mono text-lg flex items-center">
+              <button onClick={handlePrevDay} className="p-2 rounded-full hover:bg-surface transition-colors">
+                <CaretLeft size={20} />
+              </button>
+              <h2 className="font-mono text-lg flex items-center mx-4">
                 <Calendar size={20} className="mr-2 text-primary" />
-                {formattedToday}
+                {formattedCurrentDate}
               </h2>
+              <button onClick={handleNextDay} className="p-2 rounded-full hover:bg-surface transition-colors">
+                <CaretRight size={20} />
+              </button>
             </div>
             
             <Card className="p-4">
@@ -266,20 +336,26 @@ function Attendance() {
                 Attendance Statistics
               </h3>
               
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div className="bg-surface p-3 rounded-lg col-span-2 md:col-span-4">
+                  <div className="text-text-secondary text-sm mb-1">Average Presence (since Sep 2)</div>
+                  <div className="flex items-center">
+                    <div className="text-2xl font-bold text-primary">{averagePresence}%</div>
+                  </div>
+                </div>
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Absence</div>
                   <div className="flex items-center">
-                    <div className="text-xl font-bold text-red-500 mr-2">{stats.absentPercentage}%</div>
-                    <div className="text-sm text-text-secondary">({stats.absent} of {stats.total})</div>
+                    <div className="text-xl font-bold text-red-500 mr-2">{stats.presentPercentage}%</div>
+                    <div className="text-sm text-text-secondary">({stats.present} of {stats.total})</div>
                   </div>
                 </div>
                 
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Presence</div>
                   <div className="flex items-center">
-                    <div className="text-xl font-bold text-green-500 mr-2">{stats.presentPercentage}%</div>
-                    <div className="text-sm text-text-secondary">({stats.present} of {stats.total})</div>
+                    <div className="text-xl font-bold text-green-500 mr-2">{stats.absentPercentage}%</div>
+                    <div className="text-sm text-text-secondary">({stats.absent} of {stats.total})</div>
                   </div>
                 </div>
               </div>
@@ -421,4 +497,4 @@ function Attendance() {
   );
 }
 
-export default withAuth(Attendance);
+export default Attendance;

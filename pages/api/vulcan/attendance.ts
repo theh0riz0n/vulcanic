@@ -1,15 +1,17 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { getAttendance } from '@/lib/utils/api-client';
-import { withApiConfig } from '@/lib/utils/api-config';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { startDate, endDate } = req.query;
-    
+    let { startDate, endDate } = req.query;
+
+    // If no dates are provided, default to today
     if (!startDate || !endDate) {
-      return res.status(400).json({ error: 'Требуются параметры startDate и endDate' });
+      const today = new Date().toISOString().split('T')[0];
+      startDate = today;
+      endDate = today;
     }
-    
+
     const attendance = await getAttendance(startDate as string, endDate as string);
     return res.status(200).json(attendance);
   } catch (error) {
@@ -18,4 +20,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default withApiConfig(handler); 
+export default handler;
