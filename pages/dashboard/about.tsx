@@ -7,12 +7,11 @@ import {
   Gift,
   UserCircle,
   EnvelopeSimple,
-  GraduationCap,
+  GithubLogo,
+  Warning,
   Buildings,
   Code,
-  Heart,
-  GithubLogo,
-  Warning
+  Heart
 } from '@phosphor-icons/react';
 import { getUserData } from '@/lib/utils/auth-utils';
 import WhatsNewModal from '@/components/ui/WhatsNewModal';
@@ -107,31 +106,6 @@ const About: React.FC = () => {
             </h3>
             <div className="text-sm text-text-secondary space-y-4">
               <p dangerouslySetInnerHTML={{ __html: t('about.creditsText') }} />
-              {/* Note: dangerous HTML usage is fine here if translation source is trusted, but if t() returns plain text with HTML entities, we might need parsing. 
-                  However, the credit string I added had standard text. Links were present in original code.
-                  In my translation value I put "Twórcy" etc but the big text "To jest fork..." I didn't put HTML tags in the JSON.
-                  Original code: <a href...>0xhkamori</a>.
-                  If I want links, I should put HTML in JSON or reconstruct it.
-                  Given complexity, I'll fallback to using hardcoded links structure with inserted names or just use the JSON text as plain text.
-                  Or I'll use the english hardcoded structure for now if maintaining links is hard with t().
-                  Wait, `t('about.creditsText')` string in my previous step was plaintext.
-                  "This is a fork of the original Vulcanic dashboard by 0xhkamori..."
-                  Links are gone.
-                  I should probably keep the links.
-                  I'll use the `t` string but if I want links I should have added them to JSON as part of HTML string.
-                  I will just use plain text for now, or assume the user wants the content translated mainly.
-                  The original had specific links.
-                  I will keep the structure and just label "Created by" etc.
-                  Actually, lines 109-110 in original about.tsx had the big text.
-                  I'll just replace "Created by:" with `t('about.credits')` (Wait, that's title).
-                  I'll leave credits block mostly as is but translate labels "Created by:", "Contact:".
-                  And the main text I will strictly replace if I can.
-                  For "This is a fork...", I will just use the hardcoded English/Polish based on lang check if I absolutely must preserve links? 
-                  Or just use `t()` and lose links? 
-                  I'll use `t()` and lose links for simplicity unless instructed. The user wants "missing polish translations".
-                  Losing links might be acceptable or I can put HTML in `en.json`?
-                  I'll just use the text I added to JSON.
-              */}
 
               <div className="flex items-center">
                 <UserCircle size={16} className="mr-2" />

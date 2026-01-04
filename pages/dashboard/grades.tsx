@@ -49,13 +49,15 @@ function Grades() {
 
   useEffect(() => {
     if (grades) {
-      console.log('Received grades:', grades);
+      console.log('Полученные оценки:', grades);
       if (grades.length > 0) {
-        console.log('First grade structure:', grades[0]);
-        console.log('Subject field:', grades.some((g: Grade) => g.Subject) ? 'Yes' : 'No');
-        console.log('Column field:', grades.some((g: Grade) => g.Column) ? 'Yes' : 'No');
-        if (grades.some((g: Grade) => g.Column)) {
-          console.log('Sample Column:', grades.find((g: Grade) => g.Column)?.Column);
+        console.log('Структура первой оценки:', grades[0]);
+        // Проверим, есть ли Subject в оценках
+        console.log('Subject поле:', grades.some(g => g.Subject) ? 'Да' : 'Нет');
+        // Проверим Column поле, которое может содержать информацию о предмете
+        console.log('Column поле:', grades.some(g => g.Column) ? 'Да' : 'Нет');
+        if (grades.some(g => g.Column)) {
+          console.log('Пример Column:', grades.find(g => g.Column)?.Column);
         }
       }
     }
@@ -65,31 +67,31 @@ function Grades() {
   const subjectGrades = useMemo(() => {
     if (!grades || !grades.length) return [];
 
-    console.log('Starting grades grouping');
-
+    console.log('Начинаю группировку оценок');
+    
     const subjectsMap = new Map<string, SubjectWithGrades>();
 
     grades.forEach((grade: Grade) => {
-      // Use Column.Subject instead of grade.Subject if available
+      // Используем Column.Subject вместо grade.Subject, если доступно
       let subject = grade.Column?.Subject || grade.Subject;
-
-      // Check if subject is object and convert to string if necessary
+      
+      // Проверяем, является ли subject объектом и преобразуем его в строку при необходимости
       if (subject && typeof subject === 'object') {
-        console.log('Subject is object:', subject);
-        // Try to use Name
+        console.log('Subject - это объект:', subject);
+        // Пытаемся использовать Name или другое подходящее поле
         if ('Name' in subject && subject.Name) {
           subject = String(subject.Name);
         } else {
-          // Fallback to JSON string
+          // Если нет подходящего поля, используем строковое представление JSON
           subject = JSON.stringify(subject);
         }
       }
-
+      
       if (!subject) {
-        console.log('Grade without subject:', grade);
+        console.log('Оценка без предмета:', grade);
         return;
       }
-
+      
       if (!subjectsMap.has(subject)) {
         subjectsMap.set(subject, {
           name: subject,
@@ -100,20 +102,20 @@ function Grades() {
 
       subjectsMap.get(subject)?.grades.push(grade);
     });
-
-    // Calculate averages
+    
+    // Расчет средних оценок
     subjectsMap.forEach(subject => {
       const numericGrades = subject.grades
         .filter((g: Grade) => g.Value && !isNaN(parseFloat(String(g.Value))))
         .map((g: Grade) => parseFloat(String(g.Value)));
-
+      
       if (numericGrades.length > 0) {
         const sum = numericGrades.reduce((a: number, b: number) => a + b, 0);
         subject.average = +(sum / numericGrades.length).toFixed(2);
       }
     });
-
-    console.log('Grouping result:', Array.from(subjectsMap.values()));
+    
+    console.log('Результат группировки:', Array.from(subjectsMap.values()));
     return Array.from(subjectsMap.values());
   }, [grades]);
 
@@ -122,15 +124,15 @@ function Grades() {
     if (!subjectGrades.length) return [];
 
     let filtered = subjectGrades;
-
-    // Filter by search term
+    
+    // Фильтрация по поисковому запросу
     if (searchTerm) {
       filtered = filtered.filter(subject =>
         subject.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    // Sort
+    
+    // Сортировка
     return filtered.sort((a: SubjectWithGrades, b: SubjectWithGrades) => {
       if (sortCriteria === 'name') {
         const aName = a.name ? String(a.name) : '';
@@ -249,8 +251,8 @@ function Grades() {
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-overlay">
                         <h3 className="font-medium text-lg">{
                           // Ensure subject name is always a string
-                          typeof subject.name === 'string'
-                            ? subject.name
+                          typeof subject.name === 'string' 
+                            ? subject.name 
                             : (typeof subject.name === 'object' && subject.name !== null)
                               ? JSON.stringify(subject.name)
                               : 'Unknown Subject'

@@ -26,26 +26,12 @@ function Schedule() {
     console.log("Lessons API response:", lessons);
     if (lessons && lessons.length > 0) {
       console.log("Sample lesson structure:", lessons[0]);
-      console.log("LESSON KEYS:", Object.keys(lessons[0]));
-      console.log("TimeSlot:", lessons[0].TimeSlot ? Object.keys(lessons[0].TimeSlot) : "Not found");
-      console.log("Date field type:", lessons[0].Date ? typeof lessons[0].Date : "undefined");
-      if (lessons[0].Date && typeof lessons[0].Date === 'object') {
-        console.log("Date object structure:", lessons[0].Date);
-      }
-    } else {
-      console.log("No lessons received");
     }
   }, [lessons]);
 
   // Debugging substitutions
   useEffect(() => {
     console.log("Substitutions API response:", substitutions);
-    if (substitutions && substitutions.length > 0) {
-      console.log("Sample substitution structure:", substitutions[0]);
-      console.log("SUBSTITUTION KEYS:", Object.keys(substitutions[0]));
-    } else {
-      console.log("No substitutions received");
-    }
   }, [substitutions]);
 
   // Create week days array
@@ -471,9 +457,7 @@ function Schedule() {
                   }
                 } else {
                   if (lessonNumber) {
-                    timeDisplay = `${t('lesson') || 'Lesson'} ${lessonNumber}`; // Added fallback or key if exists. I'll stick to 'Lesson' if key missing, or remove check.
-                    // Actually I'll use hardcoded 'Lesson' if key not found as generic fallback?
-                    // Better: just use time if available.
+                    timeDisplay = `${t('lesson') || 'Lesson'} ${lessonNumber}`;
                     if (timeStart) {
                       if (timeEnd) {
                         timeDisplay += ` (${timeStart}-${timeEnd})`;

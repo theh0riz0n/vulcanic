@@ -40,15 +40,6 @@ function Homework() {
   useEffect(() => {
     if (homework) {
       console.log('Received homework data:', homework);
-      if (homework.length > 0) {
-        console.log('First task structure:', homework[0]);
-        if (homework[0].Date) {
-          console.log('Date field type:', typeof homework[0].Date, 'Value:', homework[0].Date);
-        }
-        if (homework[0].Deadline) {
-          console.log('Deadline field type:', typeof homework[0].Deadline, 'Value:', homework[0].Deadline);
-        }
-      }
     }
   }, [homework]);
 
@@ -140,12 +131,6 @@ function Homework() {
         }
       }
 
-      // Format date or use fallback
-      // Use formatters with potential localization or just DateString for now
-      // The groups key is displayed directly. `formatDate` returns English usually.
-      // I'll format date to string here using native formatting if possible, OR rely on formatDate returning DD.MM.YYYY
-      // `formatDate` from utils seems to return DD.MM.YYYY.
-      // I'll stick to `formatDate` for grouping keys as it is stable.
       const date = dateObj ? formatDate(dateObj) : 'No date';
 
       if (!grouped.has(date)) {
@@ -291,18 +276,6 @@ function Homework() {
             ) : (
               <Card className="p-6 text-center">
                 <p className="text-text-secondary">
-                  {searchTerm ? t('homework.noTasks') : t('nav.homework')}? {/* Wait, 'No homework' in En was hardcoded. PL has 'Brak zadań'. key 'homework.noTasks' = 'Brak zadań' / 'No tasks found'. I will use t('homework.noTasks') for generic. */}
-                  {/* Logic: if searchTerm present, 'No tasks found'. If not, 'No homework'. 
-                      I'll use t('homework.noTasks') for both or just use 'Brak zadań' for both.
-                      'homework.noHomework' exists in keys? I added 'homework.noTasks'.
-                      Let's check pl.json in view.
-                      Actually usage in implementation plan code above uses `searchTerm ? t('homework.noTasks') : t('nav.homework')`.
-                      `nav.homework` means "Homework" title.
-                      I need `homework.noHomework`.
-                      `pl.json` has `homework.noHomework`?
-                      Step 217 (en.json) showed line 86: `"homework.noHomework": "No homework found."`.
-                      I will use `t('homework.noHomework')` if no search term.
-                  */}
                   {searchTerm ? t('homework.noTasks') : t('homework.noHomework')}
                 </p>
               </Card>
