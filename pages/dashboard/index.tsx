@@ -2,30 +2,29 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
 import { useCurrentWeekData, useCurrentDayData } from '@/lib/hooks/useVulcanData';
-import { formatDate, getDayOfWeek, formatTime } from '@/lib/utils/formatters';
+import { formatTime } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  GraduationCap, 
-  ClockCounterClockwise, 
+import {
+  Calendar,
+  GraduationCap,
+  ClockCounterClockwise,
   Notepad,
-  Envelope,
   BookOpen,
   Building,
-  Warning
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import Loading from '@/components/ui/Loading';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import withAuth from '@/lib/utils/withAuth';
 import { getUserData } from '@/lib/utils/auth-utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 function Dashboard() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useCurrentDayData('lessons');
   const { data: substitutions, isLoading: substitutionsLoading, error: substitutionsError } = useCurrentDayData('substitutions');
   const [todaysLessons, setTodaysLessons] = useState<any[]>([]);
-  const [greeting, setGreeting] = useState('Good day');
+  const { t, language } = useLanguage();
 
   const isLoading = lessonsLoading || substitutionsLoading;
   const error = lessonsError || substitutionsError;
@@ -41,13 +40,6 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    // Update greeting based on time of day
-    const hour = currentDate.getHours();
-    if (hour < 6) setGreeting('Good night');
-    else if (hour < 12) setGreeting('Good morning');
-    else if (hour < 18) setGreeting('Good day');
-    else setGreeting('Good evening');
-
     // Update clock every minute
     const timer = setInterval(() => {
       setCurrentDate(new Date());
@@ -65,14 +57,14 @@ function Dashboard() {
       const todayMonth = String(todayObj.getMonth() + 1).padStart(2, '0');
       const todayDay = String(todayObj.getDate()).padStart(2, '0');
       const today = `${todayYear}-${todayMonth}-${todayDay}`;
-      
+
       console.log('[DEBUG] Today\'s date for filtering:', today);
-      
+
       // Filter regular lessons
-      const filteredLessons = lessons ? lessons.filter(lesson => {
+      const filteredLessons = lessons ? lessons.filter((lesson: any) => {
         // Check date format from API
         let lessonDate = null;
-        
+
         if (lesson.Date) {
           // If it's an object with Timestamp (Vulcan API format)
           if (lesson.Date.Timestamp) {
@@ -82,7 +74,7 @@ function Dashboard() {
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             lessonDate = `${year}-${month}-${day}`;
-          } 
+          }
           // If it's an object with Date (Vulcan API format)
           else if (lesson.Date.Date) {
             lessonDate = lesson.Date.Date;
@@ -102,7 +94,7 @@ function Dashboard() {
               const year = lesson.Date.Year || lesson.Date.year;
               const month = (lesson.Date.Month || lesson.Date.month);
               const day = lesson.Date.Day || lesson.Date.day;
-              
+
               if (year && month !== undefined && day) {
                 lessonDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               }
@@ -111,20 +103,20 @@ function Dashboard() {
               return false; // Skip this lesson
             }
           }
-        } 
+        }
         // If Date is a string
         else if (typeof lesson.Date === 'string') {
           lessonDate = lesson.Date.split('T')[0];
         }
-        
+
         console.log(`[DEBUG] Lesson date: ${lessonDate}, comparing with today: ${today}`);
         return lessonDate === today;
       }) : [];
-      
+
       // Filter substitutions
-      const filteredSubstitutions = substitutions ? substitutions.filter(substitution => {
+      const filteredSubstitutions = substitutions ? substitutions.filter((substitution: any) => {
         let substitutionDate = null;
-        
+
         if (substitution.LessonDate) {
           // Extract from LessonDate object
           if (typeof substitution.LessonDate === 'object') {
@@ -141,39 +133,39 @@ function Dashboard() {
           // Use existing date extraction logic as fallback
           if (typeof substitution.Date === 'object' && substitution.Date.Date) {
             substitutionDate = substitution.Date.Date;
-          } 
+          }
           else if (typeof substitution.Date === 'string') {
             substitutionDate = substitution.Date.split('T')[0];
           }
         }
-        
+
         return substitutionDate === today;
       }) : [];
-      
+
       console.log(`[DEBUG] Found ${filteredLessons.length} lessons and ${filteredSubstitutions.length} substitutions for today`);
-      
+
       // Process substitutions to mark replaced lessons
       const enhancedLessons = [...filteredLessons];
-      
+
       // Add substitutions to the lessons array with a flag
-      filteredSubstitutions.forEach(substitution => {
+      filteredSubstitutions.forEach((substitution: any) => {
         // Get the original replaced lesson ID if available
         let replacedLessonId = null;
         if (substitution.ScheduleId) {
           replacedLessonId = substitution.ScheduleId;
         }
-        
+
         // Determine if this is a direct replacement or a new lesson
         if (replacedLessonId) {
           // Check if this substitution replaces an existing lesson
-          const existingLessonIndex = enhancedLessons.findIndex(lesson => 
+          const existingLessonIndex = enhancedLessons.findIndex(lesson =>
             lesson.Id === replacedLessonId || lesson.ScheduleId === replacedLessonId
           );
-          
+
           if (existingLessonIndex >= 0) {
             // Replace the existing lesson with this substitution but keep original info
             const originalInfo = enhancedLessons[existingLessonIndex];
-            
+
             // Create the replacement object
             const replacementLesson = {
               ...substitution,
@@ -192,14 +184,14 @@ function Dashboard() {
                 isFromOriginalLesson: true
               };
             }
-            
+
             // Preserve TimeStart and TimeEnd from original lesson if not present in substitution
-            if ((!replacementLesson.TimeStart || !replacementLesson.TimeEnd) && 
-                (originalInfo.TimeStart || originalInfo.TimeEnd)) {
+            if ((!replacementLesson.TimeStart || !replacementLesson.TimeEnd) &&
+              (originalInfo.TimeStart || originalInfo.TimeEnd)) {
               replacementLesson.TimeStart = replacementLesson.TimeStart || originalInfo.TimeStart;
               replacementLesson.TimeEnd = replacementLesson.TimeEnd || originalInfo.TimeEnd;
             }
-            
+
             // Replace the original lesson with the substitution
             enhancedLessons[existingLessonIndex] = replacementLesson;
           } else {
@@ -221,18 +213,18 @@ function Dashboard() {
           });
         }
       });
-      
+
       // Existing sorting and current lesson logic
       const sorted = enhancedLessons.sort((a, b) => {
         // Convert lesson start time to Date object for comparison
         let timeA, timeB;
-        
+
         try {
           // Process TimeSlot in Vulcan API format
           if (a.TimeSlot && a.TimeSlot.Start) {
             const [hourA, minuteA] = a.TimeSlot.Start.split(':').map(Number);
             timeA = new Date(0, 0, 0, hourA || 0, minuteA || 0);
-          } 
+          }
           // Other time formats
           else if (a.TimeStart) {
             if (typeof a.TimeStart === 'string') {
@@ -245,7 +237,7 @@ function Dashboard() {
           } else {
             timeA = new Date();
           }
-          
+
           // Process TimeSlot in Vulcan API format
           if (b.TimeSlot && b.TimeSlot.Start) {
             const [hourB, minuteB] = b.TimeSlot.Start.split(':').map(Number);
@@ -267,27 +259,27 @@ function Dashboard() {
           console.error('Error parsing lesson time:', e);
           return 0;
         }
-        
+
         return timeA.getTime() - timeB.getTime();
       });
-      
+
       // Add current lesson information
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
-      
+
       const mappedLessons = sorted.map(lesson => {
         // Check if this lesson is currently happening
         let isCurrentLesson = false;
-        
+
         // Parse start and end times
         let startHour = 0, startMinute = 0, endHour = 0, endMinute = 0;
-        
+
         if (lesson.TimeSlot) {
           if (lesson.TimeSlot.Start && lesson.TimeSlot.End) {
             const startParts = lesson.TimeSlot.Start.split(':').map(Number);
             const endParts = lesson.TimeSlot.End.split(':').map(Number);
-            
+
             startHour = startParts[0] || 0;
             startMinute = startParts[1] || 0;
             endHour = endParts[0] || 0;
@@ -297,7 +289,7 @@ function Dashboard() {
           if (typeof lesson.TimeStart === 'string' && typeof lesson.TimeEnd === 'string') {
             const startDate = new Date(lesson.TimeStart);
             const endDate = new Date(lesson.TimeEnd);
-            
+
             startHour = startDate.getHours();
             startMinute = startDate.getMinutes();
             endHour = endDate.getHours();
@@ -309,41 +301,49 @@ function Dashboard() {
             endMinute = lesson.TimeEnd.Minute || 0;
           }
         }
-        
+
         // Convert all times to minutes for easier comparison
         const startTimeInMinutes = startHour * 60 + startMinute;
         const endTimeInMinutes = endHour * 60 + endMinute;
         const currentTimeInMinutes = currentHour * 60 + currentMinute;
-        
+
         // Check if current time is between start and end
         isCurrentLesson = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
-        
+
         return {
           ...lesson,
           isCurrentLesson
         };
       });
-      
+
       setTodaysLessons(mappedLessons);
     } else {
       setTodaysLessons([]);
     }
   }, [lessons, substitutions]);
 
+  const getGreeting = () => {
+    const hour = currentDate.getHours();
+    if (hour < 6) return t('greeting.night');
+    if (hour < 12) return t('greeting.morning');
+    if (hour < 18) return t('greeting.afternoon');
+    return t('greeting.evening');
+  };
+
   const quickLinks = [
-    { title: 'Schedule', icon: Calendar, color: 'bg-accent', href: '/dashboard/schedule' },
-    { title: 'Grades', icon: GraduationCap, color: 'bg-primary', href: '/dashboard/grades' },
-    { title: 'Attendance', icon: ClockCounterClockwise, color: 'bg-secondary', href: '/dashboard/attendance' },
-    { title: 'Homework', icon: Notepad, color: 'bg-green-500', href: '/dashboard/homework' }
+    { title: t('nav.schedule'), icon: Calendar, color: 'bg-accent', href: '/dashboard/schedule' },
+    { title: t('nav.grades'), icon: GraduationCap, color: 'bg-primary', href: '/dashboard/grades' },
+    { title: t('nav.attendance'), icon: ClockCounterClockwise, color: 'bg-secondary', href: '/dashboard/attendance' },
+    { title: t('nav.homework'), icon: Notepad, color: 'bg-green-500', href: '/dashboard/homework' }
   ];
 
   const renderContent = () => {
     if (isLoading) {
-      return <Loading text="Loading schedule..." />;
+      return <Loading text={t('loading.schedule')} />;
     }
 
     if (error) {
-      return <ErrorDisplay message={error.message} />;
+      return <ErrorDisplay message={error.message || t('error.text')} />;
     }
 
     return (
@@ -359,7 +359,7 @@ function Dashboard() {
               <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold">
                 {userInfo.name.split(' ').map(n => n[0]).join('')}
               </div>
-              
+
               <div className="flex-1">
                 <Link href="/dashboard/profile">
                   <h2 className="text-lg font-bold">{userInfo.name}</h2>
@@ -367,7 +367,7 @@ function Dashboard() {
                 <div className="text-text-secondary text-xs space-y-1">
                   <div className="flex items-center">
                     <BookOpen size={12} className="mr-1" />
-                    <span>Class {userInfo.class}</span>
+                    <span>{t('profile_class')} {userInfo.class}</span>
                   </div>
                   <div className="flex items-center">
                     <Building size={12} className="mr-1" />
@@ -378,7 +378,7 @@ function Dashboard() {
             </div>
           </Card>
         </motion.div>
-        
+
         <div className="grid grid-cols-2 gap-3 mb-6">
           {quickLinks.map((link, index) => (
             <Link href={link.href} key={index} onClick={(e) => {
@@ -395,8 +395,8 @@ function Dashboard() {
           ))}
         </div>
 
-        <h2 className="text-xl font-mono font-bold mb-4">Today</h2>
-        
+        <h2 className="text-xl font-mono font-bold mb-4">{t('dashboard.today')}</h2>
+
         {/* Display lessons (including substitutions) */}
         {todaysLessons.length > 0 ? (
           <div className="space-y-3">
@@ -405,12 +405,12 @@ function Dashboard() {
               const isSubstitution = lesson.isSubstitution || false;
               const substitutionReason = lesson.substitutionReason || '';
               let changeType = '';
-              
+
               // Get change information if it exists
               if (lesson.Change && lesson.Change.Type) {
                 switch (lesson.Change.Type) {
                   case 1:
-                    changeType = 'Canceled';
+                    changeType = 'Canceled'; // Ideally these should be translated too
                     break;
                   case 2:
                     changeType = 'Changed';
@@ -422,10 +422,10 @@ function Dashboard() {
                     changeType = 'Modified';
                 }
               }
-              
+
               return (
-                <Card 
-                  key={index} 
+                <Card
+                  key={index}
                   className={`p-4 ${lesson.isCurrentLesson ? 'border-2 border-accent' : ''} ${isSubstitution ? 'border-l-4 border-warning' : ''}`}
                   withHover={false}
                 >
@@ -437,34 +437,34 @@ function Dashboard() {
                         </h3>
                         {isSubstitution && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-warning text-white">
-                            {substitutionReason || changeType || 'Substitution'}
+                            {substitutionReason || changeType || t('schedule.substitution')}
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-text-secondary">
-                        {lesson.Room?.Code ? `Room: ${lesson.Room.Code}` : (lesson.Room ? `Room: ${lesson.Room}` : '')}
-                        {lesson.TeacherPrimary?.DisplayName ? ` • ${lesson.TeacherPrimary.DisplayName}` : 
-                         (lesson.Teacher ? ` • ${lesson.Teacher}` : '')}
+                        {lesson.Room?.Code ? `${t('lesson.room')}: ${lesson.Room.Code}` : (lesson.Room ? `${t('lesson.room')}: ${lesson.Room}` : '')}
+                        {lesson.TeacherPrimary?.DisplayName ? ` • ${lesson.TeacherPrimary.DisplayName}` :
+                          (lesson.Teacher ? ` • ${lesson.Teacher}` : '')}
                       </p>
                       {isSubstitution && lesson.originalSubject && lesson.Subject && (
                         <p className="text-xs text-warning-dark mt-1">
-                          {typeof lesson.originalSubject === 'string' 
-                            ? `Changed from: ${lesson.originalSubject}` 
-                            : `Changed from: ${lesson.originalSubject.Name || 'Unknown'}`}
+                          {typeof lesson.originalSubject === 'string'
+                            ? `${t('lesson.changedFrom')}: ${lesson.originalSubject}`
+                            : `${t('lesson.changedFrom')}: ${lesson.originalSubject.Name || 'Unknown'}`}
                         </p>
                       )}
                       {isSubstitution && lesson.originalSubject && (!lesson.TimeSlot || (lesson.TimeSlot && !lesson.TimeSlot.isFromOriginalLesson)) && (
                         <p className="text-xs text-info-dark mt-1">
-                          Using original lesson time
+                          {t('lesson.usingOriginalTime')}
                         </p>
                       )}
                     </div>
                     <div className="bg-surface px-3 py-1 rounded-full text-text-secondary text-sm">
-                      {lesson.TimeSlot?.Display || 
-                       (lesson.TimeStart && lesson.TimeEnd ? `${formatTime(lesson.TimeStart)} - ${formatTime(lesson.TimeEnd)}` : 
-                        (lesson.TimeSlot ? `${lesson.TimeSlot.Start} - ${lesson.TimeSlot.End}` : 'Time not specified'))}
-                      {isSubstitution && lesson.originalSubject && 
-                        lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson && 
+                      {lesson.TimeSlot?.Display ||
+                        (lesson.TimeStart && lesson.TimeEnd ? `${formatTime(lesson.TimeStart)} - ${formatTime(lesson.TimeEnd)}` :
+                          (lesson.TimeSlot ? `${lesson.TimeSlot.Start} - ${lesson.TimeSlot.End}` : t('lesson.timeNotSpecified')))}
+                      {isSubstitution && lesson.originalSubject &&
+                        lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson &&
                         ' (Original time)'}
                     </div>
                   </div>
@@ -474,7 +474,7 @@ function Dashboard() {
           </div>
         ) : (
           <Card className="p-6 text-center" withHover={false}>
-            <p className="text-text-secondary">No lessons for today</p>
+            <p className="text-text-secondary">{t('dashboard.noLessons')}</p>
           </Card>
         )}
       </>
@@ -486,19 +486,19 @@ function Dashboard() {
       <div className="mb-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-mono font-bold">
-            {greeting}, {userInfo.name.split(' ')[0]}!
+            {getGreeting()}, {userInfo.name.split(' ')[0]}!
           </h1>
           <div className="text-right">
-            <p className="text-text-secondary">
-              {formatDate(currentDate, 'EEEE, MMMM d')}
+            <p className="text-text-secondary first-letter:uppercase">
+              {currentDate.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
             <p className="text-text-tertiary text-sm">
-              {formatDate(currentDate, 'h:mm a')}
+              {currentDate.toLocaleTimeString(language === 'pl' ? 'pl-PL' : 'en-US', { hour: 'numeric', minute: '2-digit' })}
             </p>
           </div>
         </div>
       </div>
-      
+
       {renderContent()}
     </DashboardLayout>
   );

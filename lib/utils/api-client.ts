@@ -59,7 +59,7 @@ const getApiapString = (): string | null => {
       global.__APIAP__ = process.env.RUNTIME_APIAP;
       return process.env.RUNTIME_APIAP;
     }
-    
+
     // Then check global state as fallback
     if (global.__APIAP__) {
       console.log('Using server-side cached APIAP from global state');
@@ -67,16 +67,16 @@ const getApiapString = (): string | null => {
       process.env.RUNTIME_APIAP = global.__APIAP__;
       return global.__APIAP__;
     }
-    
+
     console.warn('No APIAP available on server without explicit configuration');
     return null;
   }
-  
+
   try {
     // Try to get from localStorage
     const storedApiap = localStorage.getItem('auth_apiap');
     if (!storedApiap) return null;
-    
+
     // Return the stored APIAP string as is
     return storedApiap;
   } catch (error) {
@@ -91,16 +91,16 @@ const APIAP_VULCAN = getApiapString();
 // Format the APIAP string for the VulcanJwtRegister
 const formatApiap = (apiapString: string | null): string | null => {
   if (!apiapString) return null;
-  
+
   try {
     // If it already has HTML structure, use it as is
     if (apiapString.startsWith('<html>')) {
       return apiapString;
     }
-    
+
     // Try to parse as JSON if needed
     let jsonData = {};
-    
+
     // If it looks like JSON, parse it
     if (apiapString.trim().startsWith('{')) {
       try {
@@ -120,7 +120,7 @@ const formatApiap = (apiapString: string | null): string | null => {
         }
       }
     }
-    
+
     // Create properly formatted APIAP string
     return `<html><head></head><body><input id="ap" type="hidden" value='${JSON.stringify(jsonData)}' /></body></html>`;
   } catch (error) {
@@ -161,21 +161,21 @@ export const initVulcan = async () => {
       getHomework: () => ({ Envelope: mockData.homework })
     };
   }
-  
+
   // Try to get APIAP from process.env first, then global state
   let serverApiap = process.env.RUNTIME_APIAP || global.__APIAP__;
-  
+
   // Debug global state
-  console.log('[API CLIENT] APIAP state check:',  
+  console.log('[API CLIENT] APIAP state check:',
     serverApiap ? `APIAP found with length: ${serverApiap.length}` : 'No APIAP found in available state');
-  
+
   if (!serverApiap) {
     console.error('No valid APIAP string available. Cannot initialize Vulcan API.');
     // List all global properties for debugging
     console.log('[API CLIENT] Available global properties:', Object.keys(global).join(', '));
     throw new Error('No valid API key found. Please authenticate first.');
   }
-  
+
   try {
     // Make sure modules are initialized
     if (!Keypair || !VulcanJwtRegister || !VulcanHebeCe) {
@@ -185,25 +185,25 @@ export const initVulcan = async () => {
         throw new Error('Failed to initialize required modules');
       }
     }
-    
+
     console.log('[API CLIENT] Using server-side APIAP for API initialization...');
-    
+
     const keypair = await (new Keypair()).init();
     console.log('[API CLIENT] Keypair initialized, creating JWT register with APIAP...');
-    
+
     const jwt = await (new VulcanJwtRegister(keypair, serverApiap, 0)).init();
     console.log('[API CLIENT] JWT register successful, RestURL:', jwt.Envelope.RestURL);
-    
+
     const hebe = new VulcanHebeCe(keypair, jwt.Envelope.RestURL);
     console.log('[API CLIENT] Connecting HebeCe...');
-    
+
     await hebe.connect();
     console.log('[API CLIENT] HebeCe connected successfully');
-    
+
     // Ensure global and process.env are in sync
     global.__APIAP__ = serverApiap;
     process.env.RUNTIME_APIAP = serverApiap;
-    
+
     return hebe;
   } catch (error) {
     console.error('[API CLIENT] Failed to initialize Vulcan API:', error);
@@ -274,14 +274,14 @@ export const getHomework = async (startDate: string, endDate: string) => {
     const hebe = await initVulcan();
     const date1 = new Date(startDate);
     const date2 = new Date(endDate);
-    
+
     console.log(`[API CLIENT DEBUG] Parsed dates: ${date1.toISOString()} to ${date2.toISOString()}`);
     console.log(`[API CLIENT DEBUG] Calling hebe.getHomework...`);
-    
+
     const homework = await hebe.getHomework(date1, date2);
-    
+
     console.log(`[API CLIENT DEBUG] Raw API response:`, homework);
-    
+
     // Check data structure and presence of Envelope
     if (homework && homework.Envelope) {
       console.log(`[API CLIENT DEBUG] Found Envelope with ${Array.isArray(homework.Envelope) ? homework.Envelope.length : 'non-array'} items`);
@@ -307,14 +307,14 @@ export const getChangedLessons = async (startDate: string, endDate: string) => {
     const hebe = await initVulcan();
     const date1 = new Date(startDate);
     const date2 = new Date(endDate);
-    
+
     console.log(`[API CLIENT DEBUG] Parsed dates for substitutions: ${date1.toISOString()} to ${date2.toISOString()}`);
     console.log(`[API CLIENT DEBUG] Calling hebe.getChangedLessons...`);
-    
+
     const changedLessons = await hebe.getChangedLessons(date1, date2);
-    
+
     console.log(`[API CLIENT DEBUG] Raw API response for substitutions:`, changedLessons);
-    
+
     // Check data structure and presence of Envelope
     if (changedLessons && changedLessons.Envelope) {
       console.log(`[API CLIENT DEBUG] Found Envelope with ${Array.isArray(changedLessons.Envelope) ? changedLessons.Envelope.length : 'non-array'} substitutions`);
@@ -329,6 +329,20 @@ export const getChangedLessons = async (startDate: string, endDate: string) => {
     }
   } catch (error) {
     console.error('[API CLIENT DEBUG] Error fetching substitutions:', error);
+    throw error;
+  }
+};
+
+// Get messages
+export const getMessages = async (folder: number = 0, limit: number = 20) => {
+  try {
+    const hebe = await initVulcan();
+    // hebece wrapper likely exposes getMessages(folder, limit) or similar
+    // We try generic call. If hebece uses different params (e.g. box ID), we assume 0 is Inbox.
+    const messages = await hebe.getMessages(folder, limit);
+    return messages.Envelope || [];
+  } catch (error) {
+    console.error('Error fetching messages:', error);
     throw error;
   }
 }; 

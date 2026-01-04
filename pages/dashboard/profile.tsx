@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
-import { 
+import {
   User,
   Envelope,
   Building,
@@ -27,26 +27,34 @@ import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColo
 import { useApiap } from '@/context/ApiapContext';
 import { useLanguage } from '@/context/LanguageContext';
 
+/**
+ * Renders the user profile page.
+ * This component displays user information, provides application settings
+ * such as theme mode, accent color, background color, and special effects.
+ * It also includes functionality for the user to log out.
+ *
+ * @returns {JSX.Element} The rendered profile page component within a DashboardLayout.
+ */
 function Profile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
-  const { 
-    accentColor, 
-    setAccentColor, 
-    backgroundColor, 
-    setBackgroundColor, 
-    isDarkMode, 
-    toggleThemeMode 
+  const {
+    accentColor,
+    setAccentColor,
+    backgroundColor,
+    setBackgroundColor,
+    isDarkMode,
+    toggleThemeMode
   } = useTheme();
   const { clearApiap } = useApiap();
   const [colorChanged, setColorChanged] = useState(false);
   const [bgChanged, setBgChanged] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  
+
   // Get user data from localStorage
   const { name, email } = getUserData();
-  
+
   // Sample user data with dynamic values from localStorage
   const userData = {
     name: name || 'User',
@@ -63,7 +71,7 @@ function Profile() {
     setColorChanged(true);
     setTimeout(() => setColorChanged(false), 1200);
   };
-  
+
   // Handle background color change with feedback
   const handleBgChange = (color: string) => {
     setBackgroundColor(color);
@@ -80,13 +88,13 @@ function Profile() {
   const handleLogout = () => {
     try {
       setIsLoggingOut(true);
-      
+
       // First clear the APIAP context to release memory
       clearApiap();
-      
+
       // Then clear localStorage
       clearUserData();
-      
+
       // Simple redirect instead of the complex approach
       window.location.href = '/';
     } catch (error) {
@@ -109,7 +117,7 @@ function Profile() {
               <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
                 {userData.name.split(' ').map(n => n[0]).join('')}
               </div>
-              
+
               <div className="flex-1 text-center sm:text-left">
                 <h2 className="text-xl font-bold mb-2">{userData.name}</h2>
                 <div className="text-text-secondary space-y-1">
@@ -131,141 +139,7 @@ function Profile() {
           </Card>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="p-6">
-            <h3 className="text-lg font-mono font-bold mb-4">{t('app_settings')}</h3>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    {isDarkMode ? (
-                      <Moon size={20} className="mr-2 text-primary" />
-                    ) : (
-                      <Sun size={20} className="mr-2 text-primary" />
-                    )}
-                    <span>{t('theme_mode')}</span>
-                  </div>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <span className="mr-2 text-xs text-text-secondary">
-                      {isDarkMode ? 'Ciemny' : 'Jasny'}
-                    </span>
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={!isDarkMode}
-                      onChange={toggleThemeMode}
-                    />
-                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
-                  </label>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <PaintBrush size={20} className="mr-2 text-primary" />
-                    <span>{t('accent_color')}</span>
-                  </div>
-                  {colorChanged && (
-                    <span className="text-xs text-primary animate-fade-in">
-                      {t('color_updated')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {Object.entries(ACCENT_COLORS).map(([name, color]) => (
-                    <button
-                      key={name}
-                      onClick={() => handleColorChange(color)}
-                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${
-                        accentColor === color 
-                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110' 
-                          : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      aria-label={`${t('set_as_accent_color')} ${name}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Moon size={20} className="mr-2 text-primary" />
-                    <span>{t('background_color')}</span>
-                  </div>
-                  {bgChanged && (
-                    <span className="text-xs text-primary animate-fade-in">
-                      {t('background_updated')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {filteredBackgroundColors.map(([name, color]) => (
-                    <button
-                      key={name}
-                      onClick={() => handleBgChange(color)}
-                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${
-                        backgroundColor === color 
-                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110' 
-                          : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: `rgb(${color})` }}
-                      aria-label={`${t('set_background')} ${name}`}
-                    >
-                      <span className="absolute text-xs font-bold" style={{ 
-                        color: isDarkMode ? 'white' : 'black',
-                        opacity: 0.75
-                      }}>
-                        {name.charAt(0).toUpperCase()}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Snowflake size={20} className="mr-2 text-primary" />
-                    <span>{t('snowflakes_effect')}</span>
-                  </div>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={showSnowflakes}
-                      onChange={(e) => setShowSnowflakes(e.target.checked)}
-                    />
-                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
-                  </label>
-                </div>
-                {showSnowflakes && (
-                  <div className="pt-2">
-                    <label htmlFor="snowflake-intensity" className="block mb-2 text-sm font-medium">
-                      {t('snowflake_intensity')}: {snowflakeIntensity}%
-                    </label>
-                    <input
-                      id="snowflake-intensity"
-                      type="range"
-                      min="10"
-                      max="100"
-                      step="10"
-                      value={snowflakeIntensity}
-                      onChange={(e) => setSnowflakeIntensity(Number(e.target.value))}
-                      className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary accent-transition"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -273,7 +147,7 @@ function Profile() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="p-6">
-            <button 
+            <button
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70"
@@ -288,4 +162,4 @@ function Profile() {
   );
 }
 
-export default withAuth(Profile); 
+export default withAuth(Profile);

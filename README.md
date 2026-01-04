@@ -1,5 +1,4 @@
 # vulcanic - custom client for eduvulcan
-🔗 App: https://vulcanic.vercel.app/
 
 ## todo
 
@@ -50,3 +49,4 @@
 - `/lib` - utilities and hooks
 - `/styles` - styles and css
 - `/public` - static files
+- `/locales` - language packs

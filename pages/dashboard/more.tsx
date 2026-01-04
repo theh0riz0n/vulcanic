@@ -1,179 +1,169 @@
-
-import React from 'react';
-import Card from '@/components/ui/Card';
-import Link from 'next/link';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import {
-  Notepad,
-  ClockCounterClockwise,
   User,
+  Envelope,
+  Backpack,
+  ClockCounterClockwise,
   Gear,
-  SignOut,
   Info,
+  SignOut,
   CaretRight
 } from '@phosphor-icons/react';
+import { useRouter } from 'next/router';
+import withAuth from '@/lib/utils/withAuth';
 import { clearUserData } from '@/lib/utils/auth-utils';
 import { useApiap } from '@/context/ApiapContext';
+import { useLanguage } from '@/context/LanguageContext';
 
-const More: React.FC = () => {
+function More() {
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { clearApiap } = useApiap();
-  const menuItems = [
-    {
-      title: 'Homework',
-      description: 'View and manage your assignments',
-      icon: Notepad,
-      href: '/dashboard/homework',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Attendance',
-      description: 'Check your attendance records',
-      icon: ClockCounterClockwise,
-      href: '/dashboard/attendance',
-      color: 'bg-secondary'
-    },
-    {
-      title: 'Profile',
-      description: 'Manage your account settings',
-      icon: User,
-      href: '/dashboard/profile',
-      color: 'bg-primary'
-    }
-  ];
-
-  const otherItems = [
-    {
-      title: 'Settings',
-      description: 'App preferences and configuration',
-      icon: Gear,
-      href: '/dashboard/settings',
-      color: 'bg-gray-500'
-    },
-    {
-      title: 'About',
-      description: 'App information and version',
-      icon: Info,
-      href: '/dashboard/about',
-      color: 'bg-blue-500'
-    }
-  ];
+  const { t } = useLanguage();
 
   const handleLogout = () => {
     try {
-      // First clear the APIAP context to release memory
+      setIsLoggingOut(true);
       clearApiap();
-      
-      // Then clear localStorage
       clearUserData();
-      
-      // Simple redirect instead of the complex approach
       window.location.href = '/';
     } catch (error) {
       console.error('Error during logout:', error);
-      // Fallback if the normal logout fails
       window.location.href = '/';
     }
   };
 
+  const menuItems = {
+    main: [
+      {
+        icon: Backpack,
+        color: 'text-green-500',
+        bgColor: 'bg-green-500/10',
+        title: t('nav.homework'),
+        description: t('more.homework.desc'),
+        href: '/dashboard/homework'
+      },
+      {
+        icon: ClockCounterClockwise,
+        color: 'text-pink-500',
+        bgColor: 'bg-pink-500/10',
+        title: t('nav.attendance'),
+        description: t('more.attendance.desc'),
+        href: '/dashboard/attendance'
+      },
+      {
+        icon: Envelope,
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        title: t('nav.messages'),
+        description: t('more.messages.desc'),
+        href: '/dashboard/messages'
+      },
+      {
+        icon: User,
+        color: 'text-purple-500',
+        bgColor: 'bg-purple-500/10',
+        title: t('nav.profile'),
+        description: t('more.profile.desc'),
+        href: '/dashboard/profile'
+      }
+    ],
+    other: [
+      {
+        icon: Gear,
+        color: 'text-gray-400',
+        bgColor: 'bg-gray-400/10',
+        title: t('settings.title'),
+        description: t('more.settings.desc'),
+        href: '/dashboard/settings'
+      },
+      {
+        icon: Info,
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-500/10',
+        title: t('about.title'),
+        description: t('more.about.desc'),
+        href: '/dashboard/about'
+      }
+    ]
+  };
+
+  const MenuItem = ({ item, onClick }: { item: any, onClick?: () => void }) => (
+    <div
+      onClick={onClick || (() => router.push(item.href))}
+      className="w-full flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors active:bg-white/10"
+    >
+      <div className="flex items-center gap-4">
+        <div className={`w-10 h-10 rounded-full ${item.bgColor} flex items-center justify-center`}>
+          <item.icon size={20} className={item.color} weight="fill" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-text-primary">{item.title}</h3>
+          <p className="text-xs text-text-secondary">{item.description}</p>
+        </div>
+      </div>
+      <CaretRight size={16} className="text-text-secondary" />
+    </div>
+  );
+
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <DashboardLayout title={t('nav.more')}>
+      <div className="space-y-6 pb-6"> {/* Added pb-6 for bottom spacing */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
         >
-          <h1 className="text-2xl font-mono font-bold mb-6">More</h1>
-          
-          {/* Main Menu Items */}
-          <div className="space-y-3 mb-8">
-            <h2 className="text-lg font-semibold text-text-secondary mb-3">Main Features</h2>
-            {menuItems.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Link href={item.href}>
-                  <Card className="p-4 hover:bg-surface-hover transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}>
-                          <item.icon size={24} weight="bold" className="text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-text-primary">{item.title}</h3>
-                          <p className="text-sm text-text-secondary">{item.description}</p>
-                        </div>
-                      </div>
-                      <CaretRight size={20} className="text-text-tertiary" />
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
+          <h2 className="text-lg font-semibold mb-3 px-1">{t('more.mainFeatures')}</h2>
+          <Card className="overflow-hidden divide-y divide-border">
+            {menuItems.main.map((item, index) => (
+              <MenuItem key={index} item={item} />
             ))}
-          </div>
+          </Card>
+        </motion.div>
 
-          {/* Other Items */}
-          <div className="space-y-3 mb-8">
-            <h2 className="text-lg font-semibold text-text-secondary mb-3">Other</h2>
-            {otherItems.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: (menuItems.length + index) * 0.1 }}
-              >
-                <Link href={item.href}>
-                  <Card className="p-4 hover:bg-surface-hover transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}>
-                          <item.icon size={24} weight="bold" className="text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-text-primary">{item.title}</h3>
-                          <p className="text-sm text-text-secondary">{item.description}</p>
-                        </div>
-                      </div>
-                      <CaretRight size={20} className="text-text-tertiary" />
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <h2 className="text-lg font-semibold mb-3 px-1">{t('more.other')}</h2>
+          <Card className="overflow-hidden divide-y divide-border">
+            {menuItems.other.map((item, index) => (
+              <MenuItem key={index} item={item} />
             ))}
-          </div>
+          </Card>
+        </motion.div>
 
-          {/* Logout Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: (menuItems.length + otherItems.length) * 0.1 }}
-          >
-            <Card 
-              className="p-4 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer border-red-200 dark:border-red-800"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Card className="overflow-hidden">
+            <div
               onClick={handleLogout}
+              className="w-full flex items-center justify-between p-4 cursor-pointer hover:bg-red-500/10 transition-colors group"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center">
-                    <SignOut size={24} weight="bold" className="text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-red-600 dark:text-red-400">Sign Out</h3>
-                    <p className="text-sm text-red-500 dark:text-red-500">Log out of your account</p>
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                  <SignOut size={20} className="text-red-500" weight="fill" />
                 </div>
-                <CaretRight size={20} className="text-red-400" />
+                <div>
+                  <h3 className="font-semibold text-red-500">{isLoggingOut ? t('logging_out') : t('logout')}</h3>
+                  <p className="text-xs text-red-400/70">{t('more.signout.desc')}</p>
+                </div>
               </div>
-            </Card>
-          </motion.div>
+              <CaretRight size={16} className="text-red-400 group-hover:text-red-500" />
+            </div>
+          </Card>
         </motion.div>
       </div>
     </DashboardLayout>
   );
-};
+}
 
-export default More;
+export default withAuth(More);

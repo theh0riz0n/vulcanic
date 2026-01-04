@@ -8,8 +8,9 @@ import { formatGrade, getGradeColor } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
 import { Trophy, CaretDown, CaretUp, MagnifyingGlass } from '@phosphor-icons/react';
 import withAuth from '@/lib/utils/withAuth';
+import { useLanguage } from '@/context/LanguageContext';
 
-// Интерфейс для оценки
+// Interface for Grade
 interface Grade {
   Value?: string | number;
   Content?: string;
@@ -22,17 +23,17 @@ interface Grade {
   Subject?: string | SubjectObject;
 }
 
-// Интерфейс для объекта предмета
+// Interface for Subject object
 interface SubjectObject {
   Id?: number | string;
   Key?: string;
   Name?: string;
   Kod?: string;
   Position?: number | string;
-  [key: string]: any; // Для других возможных свойств
+  [key: string]: any; // For other possible properties
 }
 
-// Интерфейс для предмета с оценками
+// Interface for Subject with grades
 interface SubjectWithGrades {
   name: string;
   grades: Grade[];
@@ -44,6 +45,7 @@ function Grades() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortCriteria, setSortCriteria] = useState<'name' | 'average'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (grades) {
@@ -61,18 +63,18 @@ function Grades() {
     }
   }, [grades]);
 
-  // Группировка оценок по предметам
+  // Group grades by subject
   const subjectGrades = useMemo(() => {
     if (!grades || !grades.length) return [];
 
     console.log('Начинаю группировку оценок');
-    
+
     const subjectsMap = new Map<string, SubjectWithGrades>();
-    
+
     grades.forEach((grade: Grade) => {
       // Используем Column.Subject вместо grade.Subject, если доступно
       let subject = grade.Column?.Subject || grade.Subject;
-      
+
       // Проверяем, является ли subject объектом и преобразуем его в строку при необходимости
       if (subject && typeof subject === 'object') {
         console.log('Subject - это объект:', subject);
@@ -84,12 +86,12 @@ function Grades() {
           subject = JSON.stringify(subject);
         }
       }
-      
+
       if (!subject) {
         console.log('Оценка без предмета:', grade);
         return;
       }
-      
+
       if (!subjectsMap.has(subject)) {
         subjectsMap.set(subject, {
           name: subject,
@@ -97,43 +99,64 @@ function Grades() {
           average: 0
         });
       }
-      
+
       subjectsMap.get(subject)?.grades.push(grade);
     });
-    
-    // Расчет средних оценок
+
+    // Calculate averages
     subjectsMap.forEach(subject => {
       const numericGrades = subject.grades
-        .filter((g: Grade) => g.Value && !isNaN(parseFloat(String(g.Value))))
-        .map((g: Grade) => parseFloat(String(g.Value)));
-      
+        .filter((g: Grade) => {
+          if (!g.Value) return false;
+          // Normalize value string
+          const valStr = String(g.Value).replace(',', '.');
+          const val = parseFloat(valStr);
+
+          if (isNaN(val)) return false;
+
+          const content = String(g.Content || '');
+          const contentRaw = String(g.ContentRaw || '');
+
+          // Exclude percentages and points (> 6.5)
+          // Also explicitly check % char
+          if (content.includes('%') || contentRaw.includes('%') || val > 6.5) {
+            return false;
+          }
+
+          // Standard grades strictly 1-6.5
+          return val >= 1 && val <= 6.5;
+        })
+        .map((g: Grade) => {
+          const valStr = String(g.Value).replace(',', '.');
+          return parseFloat(valStr);
+        });
+
       if (numericGrades.length > 0) {
         const sum = numericGrades.reduce((a: number, b: number) => a + b, 0);
         subject.average = +(sum / numericGrades.length).toFixed(2);
       }
     });
-    
+
     console.log('Результат группировки:', Array.from(subjectsMap.values()));
     return Array.from(subjectsMap.values());
   }, [grades]);
 
-  // Фильтрация и сортировка предметов
+  // Filter and sort subjects
   const filteredAndSortedSubjects = useMemo(() => {
     if (!subjectGrades.length) return [];
-    
+
     let filtered = subjectGrades;
-    
+
     // Фильтрация по поисковому запросу
     if (searchTerm) {
-      filtered = filtered.filter(subject => 
+      filtered = filtered.filter(subject =>
         subject.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     // Сортировка
     return filtered.sort((a: SubjectWithGrades, b: SubjectWithGrades) => {
       if (sortCriteria === 'name') {
-        // Убедимся, что name это строка
         const aName = a.name ? String(a.name) : '';
         const bName = b.name ? String(b.name) : '';
         const comparison = aName.localeCompare(bName);
@@ -145,7 +168,7 @@ function Grades() {
     });
   }, [subjectGrades, searchTerm, sortCriteria, sortDirection]);
 
-  // Переключение направления сортировки
+  // Toggle sort direction
   const toggleSort = (criteria: 'name' | 'average') => {
     if (sortCriteria === criteria) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -155,30 +178,30 @@ function Grades() {
     }
   };
 
-  // Расчет общего среднего балла
+  // Calculate overall average
   const overallAverage = useMemo(() => {
     if (!subjectGrades.length) return 0;
-    
+
     const subjectsWithAverage = subjectGrades.filter((s: SubjectWithGrades) => s.average > 0);
     if (!subjectsWithAverage.length) return 0;
-    
+
     const sum = subjectsWithAverage.reduce((acc: number, subject: SubjectWithGrades) => acc + subject.average, 0);
     return +(sum / subjectsWithAverage.length).toFixed(2);
   }, [subjectGrades]);
 
   return (
-    <DashboardLayout title="Grades">
+    <DashboardLayout title={t('grades.title')}>
       {isLoading ? (
-        <Loading text="Loading grades..." />
+        <Loading text={t('loading.grades')} />
       ) : error ? (
-        <ErrorDisplay message={error.message} />
+        <ErrorDisplay message={error.message || t('error.text')} />
       ) : (
         <>
           <div className="mb-6">
             <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-mono font-bold mb-2">Average Grade</h2>
+                  <h2 className="text-lg font-mono font-bold mb-2">{t('grades.average')}</h2>
                   <div className="flex items-center">
                     <Trophy size={24} weight="fill" className="text-yellow-500 mr-3" />
                     <span className={`text-xl font-bold ${getGradeColor(overallAverage)}`}>
@@ -198,7 +221,7 @@ function Grades() {
               <MagnifyingGlass size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary" />
               <input
                 type="text"
-                placeholder="Search by subject..."
+                placeholder={t('grades.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-surface border border-overlay rounded-lg py-2 pl-10 pr-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -208,21 +231,21 @@ function Grades() {
 
           <div className="mb-6">
             <div className="flex justify-between items-center px-2 py-1 text-sm text-text-secondary">
-              <button 
+              <button
                 onClick={() => toggleSort('name')}
                 className="flex items-center focus:outline-none"
               >
-                Subject
+                {t('grades.subject')}
                 {sortCriteria === 'name' && (
                   sortDirection === 'asc' ? <CaretUp size={16} className="ml-1" /> : <CaretDown size={16} className="ml-1" />
                 )}
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => toggleSort('average')}
                 className="flex items-center focus:outline-none"
               >
-                Average Grade
+                {t('grades.average')}
                 {sortCriteria === 'average' && (
                   sortDirection === 'asc' ? <CaretUp size={16} className="ml-1" /> : <CaretDown size={16} className="ml-1" />
                 )}
@@ -250,8 +273,8 @@ function Grades() {
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-overlay">
                         <h3 className="font-medium text-lg">{
                           // Ensure subject name is always a string
-                          typeof subject.name === 'string' 
-                            ? subject.name 
+                          typeof subject.name === 'string'
+                            ? subject.name
                             : (typeof subject.name === 'object' && subject.name !== null)
                               ? JSON.stringify(subject.name)
                               : 'Unknown Subject'
@@ -260,19 +283,18 @@ function Grades() {
                           {subject.average || 'N/A'}
                         </span>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-3 pt-1">
                         {subject.grades.map((grade: Grade, gradeIndex: number) => {
-                          // Убедимся, что у нас есть корректное значение для подсказки
-                          const tooltipContent = 
-                            typeof grade.Topic === 'string' ? grade.Topic : 
-                            typeof grade.Topic === 'object' && grade.Topic !== null ? JSON.stringify(grade.Topic) :
-                            typeof grade.Comment === 'string' ? grade.Comment :
-                            typeof grade.Comment === 'object' && grade.Comment !== null ? JSON.stringify(grade.Comment) :
-                            '';
-                          
+                          const tooltipContent =
+                            typeof grade.Topic === 'string' ? grade.Topic :
+                              typeof grade.Topic === 'object' && grade.Topic !== null ? JSON.stringify(grade.Topic) :
+                                typeof grade.Comment === 'string' ? grade.Comment :
+                                  typeof grade.Comment === 'object' && grade.Comment !== null ? JSON.stringify(grade.Comment) :
+                                    '';
+
                           return (
-                            <div 
+                            <div
                               key={gradeIndex}
                               className={`px-4 py-2 rounded-md shadow-sm bg-surface-hover ${getGradeColor(grade.Value || '')} font-medium border border-overlay hover:scale-105 transition-transform duration-150`}
                               title={tooltipContent}
@@ -289,7 +311,7 @@ function Grades() {
             ) : (
               <Card className="p-8 text-center shadow-md">
                 <p className="text-text-secondary text-lg">
-                  {searchTerm ? 'Subjects not found' : 'Grades not available'}
+                  {searchTerm ? t('grades.notFound') : t('grades.noAvailable')}
                 </p>
               </Card>
             )}
@@ -300,4 +322,4 @@ function Grades() {
   );
 }
 
-export default withAuth(Grades); 
+export default withAuth(Grades);
