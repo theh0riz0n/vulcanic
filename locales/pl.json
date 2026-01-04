@@ -110,5 +110,13 @@
   "background_updated": "Tło zaktualizowane!",
   "set_as_accent_color": "Ustaw jako kolor akcentu",
   "set_background": "Ustaw tło",
-  "nav.more": "Więcej"
+  "nav.more": "Więcej",
+  "more.mainFeatures": "Główne funkcje",
+  "more.other": "Inne",
+  "more.homework.desc": "Przeglądaj i zarządzaj zadaniami",
+  "more.attendance.desc": "Sprawdź swoją frekwencję",
+  "more.profile.desc": "Zarządzaj ustawieniami konta",
+  "more.settings.desc": "Preferencje i konfiguracja aplikacji",
+  "more.about.desc": "Informacje o aplikacji i wersja",
+  "more.signout.desc": "Wyloguj się z konta"
 }

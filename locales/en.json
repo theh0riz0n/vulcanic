@@ -103,5 +103,13 @@
   "background_updated": "Background updated!",
   "set_as_accent_color": "Set as accent color",
   "set_background": "Set background",
-  "nav.more": "More"
+  "nav.more": "More",
+  "more.mainFeatures": "Main Features",
+  "more.other": "Other",
+  "more.homework.desc": "View and manage your assignments",
+  "more.attendance.desc": "Check your attendance records",
+  "more.profile.desc": "Manage your account settings",
+  "more.settings.desc": "App preferences and configuration",
+  "more.about.desc": "App information and version",
+  "more.signout.desc": "Log out of your account"
 }

@@ -1,292 +1,158 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import {
   User,
-  Envelope,
-  Building,
-  IdentificationCard,
-  BookOpen,
-  Gift,
+  Backpack,
+  ClockCounterClockwise,
+  Gear,
+  Info,
   SignOut,
-  UserCircle,
-  EnvelopeSimple,
-  GraduationCap,
-  Buildings,
-  Snowflake,
-  PaintBrush,
-  Moon,
-  Sun
+  CaretRight
 } from '@phosphor-icons/react';
 import { useRouter } from 'next/router';
 import withAuth from '@/lib/utils/withAuth';
-import { getUserData, clearUserData } from '@/lib/utils/auth-utils';
-import { useSnowflakes } from '@/context/SnowflakesContext';
-import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColorContext';
+import { clearUserData } from '@/lib/utils/auth-utils';
 import { useApiap } from '@/context/ApiapContext';
 import { useLanguage } from '@/context/LanguageContext';
 
-/**
- * Renders the more/settings page.
- * This component displays user information, provides application settings
- * such as theme mode, accent color, background color, and special effects.
- * It also includes functionality for the user to log out.
- *
- * @returns {JSX.Element} The rendered more page component within a DashboardLayout.
- */
 function More() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
-  const {
-    accentColor,
-    setAccentColor,
-    backgroundColor,
-    setBackgroundColor,
-    isDarkMode,
-    toggleThemeMode
-  } = useTheme();
   const { clearApiap } = useApiap();
-  const [colorChanged, setColorChanged] = useState(false);
-  const [bgChanged, setBgChanged] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
-
-  // Get user data from localStorage
-  const { name, email } = getUserData();
-
-  // Sample user data with dynamic values from localStorage
-  const userData = {
-    name: name || 'User',
-    email: email || 'user@example.com',
-    class: 'ZSE-I',
-    school: 'Lodz',
-    id: '3dc57ed0-9668-402e-82e9-53c0da5f8aba',
-    unitId: '67b10649-9dce-4738-9a32-88e3c7c1ec88'
-  };
-
-  // Handle color change with feedback
-  const handleColorChange = (color: string) => {
-    setAccentColor(color);
-    setColorChanged(true);
-    setTimeout(() => setColorChanged(false), 1200);
-  };
-
-  // Handle background color change with feedback
-  const handleBgChange = (color: string) => {
-    setBackgroundColor(color);
-    setBgChanged(true);
-    setTimeout(() => setBgChanged(false), 1200);
-  };
-
-  // Filter background colors based on current theme mode
-  const filteredBackgroundColors = Object.entries(BACKGROUND_COLORS).filter(([key]) => {
-    const isDarkColor = ['dark', 'darker', 'navy', 'gray', 'charcoal', 'black'].includes(key);
-    return isDarkMode ? isDarkColor : !isDarkColor;
-  });
+  const { t } = useLanguage();
 
   const handleLogout = () => {
     try {
       setIsLoggingOut(true);
-
-      // First clear the APIAP context to release memory
       clearApiap();
-
-      // Then clear localStorage
       clearUserData();
-
-      // Simple redirect instead of the complex approach
       window.location.href = '/';
     } catch (error) {
       console.error('Error during logout:', error);
-      // Fallback if the normal logout fails
       window.location.href = '/';
     }
   };
 
+  const menuItems = {
+    main: [
+      {
+        icon: Backpack,
+        color: 'text-green-500',
+        bgColor: 'bg-green-500/10',
+        title: t('nav.homework'),
+        description: t('more.homework.desc'),
+        href: '/dashboard/homework'
+      },
+      {
+        icon: ClockCounterClockwise,
+        color: 'text-pink-500',
+        bgColor: 'bg-pink-500/10',
+        title: t('nav.attendance'),
+        description: t('more.attendance.desc'),
+        href: '/dashboard/attendance'
+      },
+      {
+        icon: User,
+        color: 'text-purple-500',
+        bgColor: 'bg-purple-500/10',
+        title: t('nav.profile'),
+        description: t('more.profile.desc'),
+        href: '/dashboard/profile'
+      }
+    ],
+    other: [
+      {
+        icon: Gear,
+        color: 'text-gray-400',
+        bgColor: 'bg-gray-400/10',
+        title: t('settings.title'),
+        description: t('more.settings.desc'),
+        href: '/dashboard/settings'
+      },
+      {
+        icon: Info,
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-500/10',
+        title: 'About', // Using hardcoded or need a key? about.tsx uses "About". 'nav.about' doesnt exist but 'profile_title' was used. I'll use hardcoded or t('settings.appSettings')? No, 'About' page. Let's use hardcoded "About" or add key. En.json had 'About' in body. I'll use "About" but `t('more.about.desc')` exists.
+        // Wait, looking at en.json, line 20: "profile_title": "Profile". 
+        // I will just use "About" string for title as existing about.tsx uses explicit string. Or I can use t('nav.more') but that's More.
+        // Actually, about.tsx uses Title="About".
+        description: t('more.about.desc'),
+        href: '/dashboard/about'
+      }
+    ]
+  };
+
+  const MenuItem = ({ item, onClick }: { item: any, onClick?: () => void }) => (
+    <div
+      onClick={onClick || (() => router.push(item.href))}
+      className="w-full flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors active:bg-white/10"
+    >
+      <div className="flex items-center gap-4">
+        <div className={`w-10 h-10 rounded-full ${item.bgColor} flex items-center justify-center`}>
+          <item.icon size={20} className={item.color} weight="fill" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-text-primary">{item.title}</h3>
+          <p className="text-xs text-text-secondary">{item.description}</p>
+        </div>
+      </div>
+      <CaretRight size={16} className="text-text-secondary" />
+    </div>
+  );
+
   return (
     <DashboardLayout title={t('nav.more')}>
-      <div className="space-y-6 theme-transition">
+      <div className="space-y-6 pb-6"> {/* Added pb-6 for bottom spacing */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
         >
-          <Card className="p-6">
-            <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
-              <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
-                {userData.name.split(' ').map(n => n[0]).join('')}
-              </div>
-
-              <div className="flex-1 text-center sm:text-left">
-                <h2 className="text-xl font-bold mb-2">{userData.name}</h2>
-                <div className="text-text-secondary space-y-1">
-                  <div className="flex items-center justify-center sm:justify-start">
-                    <Envelope size={16} className="mr-2" />
-                    <span>{userData.email}</span>
-                  </div>
-                  <div className="flex items-center justify-center sm:justify-start">
-                    <BookOpen size={16} className="mr-2" />
-                    <span>{t('profile_class')} {userData.class}</span>
-                  </div>
-                  <div className="flex items-center justify-center sm:justify-start">
-                    <Building size={16} className="mr-2" />
-                    <span>{userData.school}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <h2 className="text-lg font-semibold mb-3 px-1">{t('more.mainFeatures')}</h2>
+          <Card className="overflow-hidden divide-y divide-border">
+            {menuItems.main.map((item, index) => (
+              <MenuItem key={index} item={item} />
+            ))}
           </Card>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Card className="p-6">
-            <h3 className="text-lg font-mono font-bold mb-4">{t('app_settings')}</h3>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    {isDarkMode ? (
-                      <Moon size={20} className="mr-2 text-primary" />
-                    ) : (
-                      <Sun size={20} className="mr-2 text-primary" />
-                    )}
-                    <span>{t('theme_mode')}</span>
-                  </div>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <span className="mr-2 text-xs text-text-secondary">
-                      {isDarkMode ? 'Ciemny' : 'Jasny'}
-                    </span>
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={!isDarkMode}
-                      onChange={toggleThemeMode}
-                    />
-                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <PaintBrush size={20} className="mr-2 text-primary" />
-                    <span>{t('accent_color')}</span>
-                  </div>
-                  {colorChanged && (
-                    <span className="text-xs text-primary animate-fade-in">
-                      {t('color_updated')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {Object.entries(ACCENT_COLORS).map(([name, color]) => (
-                    <button
-                      key={name}
-                      onClick={() => handleColorChange(color)}
-                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${accentColor === color
-                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
-                          : 'hover:scale-105'
-                        }`}
-                      style={{ backgroundColor: color }}
-                      aria-label={`${t('set_as_accent_color')} ${name}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Moon size={20} className="mr-2 text-primary" />
-                    <span>{t('background_color')}</span>
-                  </div>
-                  {bgChanged && (
-                    <span className="text-xs text-primary animate-fade-in">
-                      {t('background_updated')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {filteredBackgroundColors.map(([name, color]) => (
-                    <button
-                      key={name}
-                      onClick={() => handleBgChange(color)}
-                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${backgroundColor === color
-                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
-                          : 'hover:scale-105'
-                        }`}
-                      style={{ backgroundColor: `rgb(${color})` }}
-                      aria-label={`${t('set_background')} ${name}`}
-                    >
-                      <span className="absolute text-xs font-bold" style={{
-                        color: isDarkMode ? 'white' : 'black',
-                        opacity: 0.75
-                      }}>
-                        {name.charAt(0).toUpperCase()}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Snowflake size={20} className="mr-2 text-primary" />
-                    <span>{t('snowflakes_effect')}</span>
-                  </div>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={showSnowflakes}
-                      onChange={(e) => setShowSnowflakes(e.target.checked)}
-                    />
-                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
-                  </label>
-                </div>
-                {showSnowflakes && (
-                  <div className="pt-2">
-                    <label htmlFor="snowflake-intensity" className="block mb-2 text-sm font-medium">
-                      {t('snowflake_intensity')}: {snowflakeIntensity}%
-                    </label>
-                    <input
-                      id="snowflake-intensity"
-                      type="range"
-                      min="10"
-                      max="100"
-                      step="10"
-                      value={snowflakeIntensity}
-                      onChange={(e) => setSnowflakeIntensity(Number(e.target.value))}
-                      className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary accent-transition"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+          <h2 className="text-lg font-semibold mb-3 px-1">{t('more.other')}</h2>
+          <Card className="overflow-hidden divide-y divide-border">
+            {menuItems.other.map((item, index) => (
+              <MenuItem key={index} item={item} />
+            ))}
           </Card>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="p-6">
-            <button
+          <Card className="overflow-hidden">
+            <div
               onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70"
+              className="w-full flex items-center justify-between p-4 cursor-pointer hover:bg-red-500/10 transition-colors group"
             >
-              <SignOut size={20} className="mr-2" />
-              {isLoggingOut ? t('logging_out') : t('log_out')}
-            </button>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                  <SignOut size={20} className="text-red-500" weight="fill" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-500">{isLoggingOut ? t('logging_out') : t('logout')}</h3>
+                  <p className="text-xs text-red-400/70">{t('more.signout.desc')}</p>
+                </div>
+              </div>
+              <CaretRight size={16} className="text-red-400 group-hover:text-red-500" />
+            </div>
           </Card>
         </motion.div>
       </div>
