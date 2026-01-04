@@ -1,72 +1,100 @@
-
-import React from 'react';
-import Card from '@/components/ui/Card';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import {
-  Notepad,
-  ClockCounterClockwise,
   User,
-  Gear,
+  Envelope,
+  Building,
+  IdentificationCard,
+  BookOpen,
+  Gift,
   SignOut,
-  Info,
-  CaretRight
+  UserCircle,
+  EnvelopeSimple,
+  GraduationCap,
+  Buildings,
+  Snowflake,
+  PaintBrush,
+  Moon,
+  Sun
 } from '@phosphor-icons/react';
-import { clearUserData } from '@/lib/utils/auth-utils';
+import { useRouter } from 'next/router';
+import withAuth from '@/lib/utils/withAuth';
+import { getUserData, clearUserData } from '@/lib/utils/auth-utils';
+import { useSnowflakes } from '@/context/SnowflakesContext';
+import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColorContext';
 import { useApiap } from '@/context/ApiapContext';
+import { useLanguage } from '@/context/LanguageContext';
 
-const More: React.FC = () => {
+/**
+ * Renders the more/settings page.
+ * This component displays user information, provides application settings
+ * such as theme mode, accent color, background color, and special effects.
+ * It also includes functionality for the user to log out.
+ *
+ * @returns {JSX.Element} The rendered more page component within a DashboardLayout.
+ */
+function More() {
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
+  const {
+    accentColor,
+    setAccentColor,
+    backgroundColor,
+    setBackgroundColor,
+    isDarkMode,
+    toggleThemeMode
+  } = useTheme();
   const { clearApiap } = useApiap();
-  const menuItems = [
-    {
-      title: 'Homework',
-      description: 'View and manage your assignments',
-      icon: Notepad,
-      href: '/dashboard/homework',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Attendance',
-      description: 'Check your attendance records',
-      icon: ClockCounterClockwise,
-      href: '/dashboard/attendance',
-      color: 'bg-secondary'
-    },
-    {
-      title: 'Profile',
-      description: 'Manage your account settings',
-      icon: User,
-      href: '/dashboard/profile',
-      color: 'bg-primary'
-    }
-  ];
+  const [colorChanged, setColorChanged] = useState(false);
+  const [bgChanged, setBgChanged] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
-  const otherItems = [
-    {
-      title: 'Settings',
-      description: 'App preferences and configuration',
-      icon: Gear,
-      href: '/dashboard/settings',
-      color: 'bg-gray-500'
-    },
-    {
-      title: 'About',
-      description: 'App information and version',
-      icon: Info,
-      href: '/dashboard/about',
-      color: 'bg-blue-500'
-    }
-  ];
+  // Get user data from localStorage
+  const { name, email } = getUserData();
+
+  // Sample user data with dynamic values from localStorage
+  const userData = {
+    name: name || 'User',
+    email: email || 'user@example.com',
+    class: 'ZSE-I',
+    school: 'Lodz',
+    id: '3dc57ed0-9668-402e-82e9-53c0da5f8aba',
+    unitId: '67b10649-9dce-4738-9a32-88e3c7c1ec88'
+  };
+
+  // Handle color change with feedback
+  const handleColorChange = (color: string) => {
+    setAccentColor(color);
+    setColorChanged(true);
+    setTimeout(() => setColorChanged(false), 1200);
+  };
+
+  // Handle background color change with feedback
+  const handleBgChange = (color: string) => {
+    setBackgroundColor(color);
+    setBgChanged(true);
+    setTimeout(() => setBgChanged(false), 1200);
+  };
+
+  // Filter background colors based on current theme mode
+  const filteredBackgroundColors = Object.entries(BACKGROUND_COLORS).filter(([key]) => {
+    const isDarkColor = ['dark', 'darker', 'navy', 'gray', 'charcoal', 'black'].includes(key);
+    return isDarkMode ? isDarkColor : !isDarkColor;
+  });
 
   const handleLogout = () => {
     try {
+      setIsLoggingOut(true);
+
       // First clear the APIAP context to release memory
       clearApiap();
-      
+
       // Then clear localStorage
       clearUserData();
-      
+
       // Simple redirect instead of the complex approach
       window.location.href = '/';
     } catch (error) {
@@ -77,103 +105,193 @@ const More: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <DashboardLayout title={t('nav.more')}>
+      <div className="space-y-6 theme-transition">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-2xl font-mono font-bold mb-6">More</h1>
-          
-          {/* Main Menu Items */}
-          <div className="space-y-3 mb-8">
-            <h2 className="text-lg font-semibold text-text-secondary mb-3">Main Features</h2>
-            {menuItems.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Link href={item.href}>
-                  <Card className="p-4 hover:bg-surface-hover transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}>
-                          <item.icon size={24} weight="bold" className="text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-text-primary">{item.title}</h3>
-                          <p className="text-sm text-text-secondary">{item.description}</p>
-                        </div>
-                      </div>
-                      <CaretRight size={20} className="text-text-tertiary" />
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          <Card className="p-6">
+            <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
+              <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
+                {userData.name.split(' ').map(n => n[0]).join('')}
+              </div>
 
-          {/* Other Items */}
-          <div className="space-y-3 mb-8">
-            <h2 className="text-lg font-semibold text-text-secondary mb-3">Other</h2>
-            {otherItems.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: (menuItems.length + index) * 0.1 }}
-              >
-                <Link href={item.href}>
-                  <Card className="p-4 hover:bg-surface-hover transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}>
-                          <item.icon size={24} weight="bold" className="text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-text-primary">{item.title}</h3>
-                          <p className="text-sm text-text-secondary">{item.description}</p>
-                        </div>
-                      </div>
-                      <CaretRight size={20} className="text-text-tertiary" />
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Logout Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: (menuItems.length + otherItems.length) * 0.1 }}
-          >
-            <Card 
-              className="p-4 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer border-red-200 dark:border-red-800"
-              onClick={handleLogout}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center">
-                    <SignOut size={24} weight="bold" className="text-white" />
+              <div className="flex-1 text-center sm:text-left">
+                <h2 className="text-xl font-bold mb-2">{userData.name}</h2>
+                <div className="text-text-secondary space-y-1">
+                  <div className="flex items-center justify-center sm:justify-start">
+                    <Envelope size={16} className="mr-2" />
+                    <span>{userData.email}</span>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-red-600 dark:text-red-400">Sign Out</h3>
-                    <p className="text-sm text-red-500 dark:text-red-500">Log out of your account</p>
+                  <div className="flex items-center justify-center sm:justify-start">
+                    <BookOpen size={16} className="mr-2" />
+                    <span>{t('profile_class')} {userData.class}</span>
+                  </div>
+                  <div className="flex items-center justify-center sm:justify-start">
+                    <Building size={16} className="mr-2" />
+                    <span>{userData.school}</span>
                   </div>
                 </div>
-                <CaretRight size={20} className="text-red-400" />
               </div>
-            </Card>
-          </motion.div>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Card className="p-6">
+            <h3 className="text-lg font-mono font-bold mb-4">{t('app_settings')}</h3>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {isDarkMode ? (
+                      <Moon size={20} className="mr-2 text-primary" />
+                    ) : (
+                      <Sun size={20} className="mr-2 text-primary" />
+                    )}
+                    <span>{t('theme_mode')}</span>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <span className="mr-2 text-xs text-text-secondary">
+                      {isDarkMode ? 'Ciemny' : 'Jasny'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={!isDarkMode}
+                      onChange={toggleThemeMode}
+                    />
+                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <PaintBrush size={20} className="mr-2 text-primary" />
+                    <span>{t('accent_color')}</span>
+                  </div>
+                  {colorChanged && (
+                    <span className="text-xs text-primary animate-fade-in">
+                      {t('color_updated')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {Object.entries(ACCENT_COLORS).map(([name, color]) => (
+                    <button
+                      key={name}
+                      onClick={() => handleColorChange(color)}
+                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${accentColor === color
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
+                          : 'hover:scale-105'
+                        }`}
+                      style={{ backgroundColor: color }}
+                      aria-label={`${t('set_as_accent_color')} ${name}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Moon size={20} className="mr-2 text-primary" />
+                    <span>{t('background_color')}</span>
+                  </div>
+                  {bgChanged && (
+                    <span className="text-xs text-primary animate-fade-in">
+                      {t('background_updated')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {filteredBackgroundColors.map(([name, color]) => (
+                    <button
+                      key={name}
+                      onClick={() => handleBgChange(color)}
+                      className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${backgroundColor === color
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
+                          : 'hover:scale-105'
+                        }`}
+                      style={{ backgroundColor: `rgb(${color})` }}
+                      aria-label={`${t('set_background')} ${name}`}
+                    >
+                      <span className="absolute text-xs font-bold" style={{
+                        color: isDarkMode ? 'white' : 'black',
+                        opacity: 0.75
+                      }}>
+                        {name.charAt(0).toUpperCase()}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Snowflake size={20} className="mr-2 text-primary" />
+                    <span>{t('snowflakes_effect')}</span>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={showSnowflakes}
+                      onChange={(e) => setShowSnowflakes(e.target.checked)}
+                    />
+                    <div className={`relative w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all accent-transition ${isDarkMode ? 'bg-gray-700 after:border-gray-700' : 'bg-gray-300 after:border-gray-300'} peer-checked:bg-primary`}></div>
+                  </label>
+                </div>
+                {showSnowflakes && (
+                  <div className="pt-2">
+                    <label htmlFor="snowflake-intensity" className="block mb-2 text-sm font-medium">
+                      {t('snowflake_intensity')}: {snowflakeIntensity}%
+                    </label>
+                    <input
+                      id="snowflake-intensity"
+                      type="range"
+                      min="10"
+                      max="100"
+                      step="10"
+                      value={snowflakeIntensity}
+                      onChange={(e) => setSnowflakeIntensity(Number(e.target.value))}
+                      className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary accent-transition"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="p-6">
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-md flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70"
+            >
+              <SignOut size={20} className="mr-2" />
+              {isLoggingOut ? t('logging_out') : t('log_out')}
+            </button>
+          </Card>
         </motion.div>
       </div>
     </DashboardLayout>
   );
-};
+}
 
-export default More;
+export default withAuth(More);
