@@ -8,8 +8,8 @@
 - [x] more ui customization
 - [ ] updates on dashboard
 - [ ] push notifications
-- [ ] details menus
-- [ ] fix translations
+- [ ] detailed menus
+- [x] fix translations
 - [ ] fix schedule bug
 - [ ] get messages working..?
 
