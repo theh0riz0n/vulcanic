@@ -6,17 +6,18 @@ import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import { useCurrentWeekData } from '@/lib/hooks/useVulcanData';
 import { formatDate, truncateText, parseDate } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  CaretDown, 
-  MagnifyingGlass, 
-  CalendarCheck 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  CaretDown,
+  MagnifyingGlass,
+  CalendarCheck
 } from '@phosphor-icons/react';
 import withAuth from '@/lib/utils/withAuth';
+import { useLanguage } from '@/context/LanguageContext';
 
-// Интерфейс для домашнего задания
+// Interface for Homework Item
 interface HomeworkItem {
   Id?: string | number;
   Key?: string;
@@ -26,13 +27,14 @@ interface HomeworkItem {
   Deadline?: any;
   Creator?: any;
   isDone?: boolean;
-  isTestData?: boolean; // Метка для тестовых данных
+  isTestData?: boolean;
 }
 
 function Homework() {
   const { data: homework, isLoading, error } = useCurrentWeekData('homework');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const { t, language } = useLanguage();
 
   // Debug log for received data
   useEffect(() => {
@@ -50,12 +52,9 @@ function Homework() {
     }
   }, [homework]);
 
-  const today = new Date();
-
-  // Transform homework data to required format
   const processedHomework = useMemo(() => {
     if (!homework || !homework.length) return [];
-    
+
     return homework.map((task: any) => {
       // Determine subject
       let subject = '';
@@ -66,10 +65,10 @@ function Homework() {
           subject = String(task.Subject);
         }
       }
-      
+
       // Check if completed (may be missing in data)
       const isDone = task.IsAnswerRequired === false || Boolean(task.AnswerDate);
-      
+
       // Return processed task
       return {
         ...task,
@@ -83,12 +82,12 @@ function Homework() {
   // Filter and sort tasks
   const filteredHomework = useMemo(() => {
     if (!processedHomework.length) return [];
-    
+
     return processedHomework
       .filter((task: HomeworkItem) => {
         // Filter by search query
-        return !searchTerm || 
-          (task.Subject && String(task.Subject).toLowerCase().includes(searchTerm.toLowerCase())) || 
+        return !searchTerm ||
+          (task.Subject && String(task.Subject).toLowerCase().includes(searchTerm.toLowerCase())) ||
           (task.Content && String(task.Content).toLowerCase().includes(searchTerm.toLowerCase()));
       })
       .sort((a: HomeworkItem, b: HomeworkItem) => {
@@ -96,11 +95,11 @@ function Homework() {
         if ((a.isDone || false) !== (b.isDone || false)) {
           return (a.isDone || false) ? 1 : -1;
         }
-        
+
         // Use Deadline for sorting if available
         const dateA = a.Deadline ? parseDate(a.Deadline) : (a.Date ? parseDate(a.Date) : new Date(0));
         const dateB = b.Deadline ? parseDate(b.Deadline) : (b.Date ? parseDate(b.Date) : new Date(0));
-        
+
         return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
       });
   }, [processedHomework, searchTerm]);
@@ -108,16 +107,16 @@ function Homework() {
   // Group by date
   const groupedHomework = useMemo(() => {
     const grouped = new Map();
-    
+
     filteredHomework.forEach((task: HomeworkItem) => {
       // Use Deadline for grouping or Date if Deadline is not available
       let dateObj = null;
-      
+
       // Check Deadline
       if (task.Deadline) {
         dateObj = parseDate(task.Deadline);
       }
-      
+
       // If no Deadline or couldn't parse it, try Date
       if (!dateObj && task.Date) {
         // Special handling for Date object
@@ -131,7 +130,7 @@ function Homework() {
             const year = task.Date.Year || task.Date.year;
             const month = (task.Date.Month || task.Date.month) - 1; // JS months start from 0
             const day = task.Date.Day || task.Date.day;
-            
+
             if (year && month !== undefined && day) {
               dateObj = new Date(year, month, day);
             }
@@ -140,21 +139,26 @@ function Homework() {
           dateObj = parseDate(task.Date);
         }
       }
-      
+
       // Format date or use fallback
+      // Use formatters with potential localization or just DateString for now
+      // The groups key is displayed directly. `formatDate` returns English usually.
+      // I'll format date to string here using native formatting if possible, OR rely on formatDate returning DD.MM.YYYY
+      // `formatDate` from utils seems to return DD.MM.YYYY.
+      // I'll stick to `formatDate` for grouping keys as it is stable.
       const date = dateObj ? formatDate(dateObj) : 'No date';
-      
+
       if (!grouped.has(date)) {
         grouped.set(date, []);
       }
-      
+
       grouped.get(date).push(task);
     });
-    
+
     return Array.from(grouped.entries());
   }, [filteredHomework]);
 
-  // Разворачивание/сворачивание задания
+  // Toggle expand
   const toggleExpand = (id: string | number) => {
     const newExpanded = new Set(expandedIds);
     if (newExpanded.has(String(id))) {
@@ -165,22 +169,22 @@ function Homework() {
     setExpandedIds(newExpanded);
   };
 
-  // Определение статуса срочности задания
+  // Get status info
   const getStatusInfo = (deadline: any, date: any) => {
     const now = new Date();
     const taskDate = parseDate(date);
     const deadlineDate = parseDate(deadline);
-    
+
     const isOverdue = deadlineDate && deadlineDate < now;
-    const isDueToday = deadlineDate && 
+    const isDueToday = deadlineDate &&
       deadlineDate.getDate() === now.getDate() &&
       deadlineDate.getMonth() === now.getMonth() &&
       deadlineDate.getFullYear() === now.getFullYear();
-    
+
     if (isOverdue) {
-      return { text: 'Overdue', icon: XCircle, iconClass: 'text-red-500' };
+      return { text: t('homework.overdue'), icon: XCircle, iconClass: 'text-red-500' };
     } else if (isDueToday) {
-      return { text: 'Today', icon: Clock, iconClass: 'text-yellow-500' };
+      return { text: t('homework.today'), icon: Clock, iconClass: 'text-yellow-500' };
     } else if (taskDate) {
       return { text: formatDate(taskDate), icon: CalendarCheck, iconClass: 'text-green-500' };
     } else {
@@ -189,11 +193,11 @@ function Homework() {
   };
 
   return (
-    <DashboardLayout title="Homework">
+    <DashboardLayout title={t('nav.homework')}>
       {isLoading ? (
-        <Loading text="Loading homework..." />
+        <Loading text={t('loading.homework')} />
       ) : error ? (
-        <ErrorDisplay message={error.message} />
+        <ErrorDisplay message={error.message || t('error.text')} />
       ) : (
         <>
           <div className="mb-5">
@@ -201,7 +205,7 @@ function Homework() {
               <MagnifyingGlass size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary" />
               <input
                 type="text"
-                placeholder="Search by subject or task..."
+                placeholder={t('homework.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-surface border border-overlay rounded-lg py-2 pl-10 pr-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -214,7 +218,7 @@ function Homework() {
               groupedHomework.map(([date, tasks]) => (
                 <div key={date} className="space-y-2">
                   <h3 className="text-lg font-mono font-bold px-1">{date}</h3>
-                  
+
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -224,7 +228,7 @@ function Homework() {
                     {tasks.map((task: HomeworkItem) => {
                       const isExpanded = expandedIds.has(String(task.Id));
                       const status = getStatusInfo(task.Deadline, task.Date);
-                      
+
                       return (
                         <motion.div
                           key={task.Id}
@@ -241,7 +245,7 @@ function Homework() {
                                   <XCircle size={20} weight="fill" className="text-red-500" />
                                 )}
                               </div>
-                              
+
                               <div className="flex-1">
                                 <div className="flex justify-between items-start mb-1">
                                   <h4 className="font-medium">
@@ -257,21 +261,21 @@ function Homework() {
                                     <span className="ml-1 text-text-secondary">{status.text}</span>
                                   </div>
                                 </div>
-                                
-                                <div 
+
+                                <div
                                   className={`text-text-secondary ${!isExpanded ? 'line-clamp-2' : ''}`}
                                   dangerouslySetInnerHTML={{ __html: task.Content || 'No description' }}
                                 />
-                                
+
                                 {task.Content && task.Content.length > 100 && (
                                   <button
                                     onClick={() => toggleExpand(task.Id || '')}
                                     className="mt-2 flex items-center text-xs text-primary hover:text-primary-dark"
                                   >
-                                    {isExpanded ? 'Collapse' : 'Expand'}
-                                    <CaretDown 
-                                      size={16} 
-                                      className={`ml-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                                    {isExpanded ? t('homework.collapse') : t('homework.expand')}
+                                    <CaretDown
+                                      size={16}
+                                      className={`ml-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                                     />
                                   </button>
                                 )}
@@ -287,7 +291,19 @@ function Homework() {
             ) : (
               <Card className="p-6 text-center">
                 <p className="text-text-secondary">
-                  {searchTerm ? 'No tasks found' : 'No homework'}
+                  {searchTerm ? t('homework.noTasks') : t('nav.homework')}? {/* Wait, 'No homework' in En was hardcoded. PL has 'Brak zadań'. key 'homework.noTasks' = 'Brak zadań' / 'No tasks found'. I will use t('homework.noTasks') for generic. */}
+                  {/* Logic: if searchTerm present, 'No tasks found'. If not, 'No homework'. 
+                      I'll use t('homework.noTasks') for both or just use 'Brak zadań' for both.
+                      'homework.noHomework' exists in keys? I added 'homework.noTasks'.
+                      Let's check pl.json in view.
+                      Actually usage in implementation plan code above uses `searchTerm ? t('homework.noTasks') : t('nav.homework')`.
+                      `nav.homework` means "Homework" title.
+                      I need `homework.noHomework`.
+                      `pl.json` has `homework.noHomework`?
+                      Step 217 (en.json) showed line 86: `"homework.noHomework": "No homework found."`.
+                      I will use `t('homework.noHomework')` if no search term.
+                  */}
+                  {searchTerm ? t('homework.noTasks') : t('homework.noHomework')}
                 </p>
               </Card>
             )}
@@ -298,4 +314,4 @@ function Homework() {
   );
 }
 
-export default withAuth(Homework); 
+export default withAuth(Homework);

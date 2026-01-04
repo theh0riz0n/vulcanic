@@ -4,6 +4,7 @@ import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import {
   User,
+  Envelope,
   Backpack,
   ClockCounterClockwise,
   Gear,
@@ -52,6 +53,14 @@ function More() {
         title: t('nav.attendance'),
         description: t('more.attendance.desc'),
         href: '/dashboard/attendance'
+      },
+      {
+        icon: Envelope,
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        title: t('nav.messages'),
+        description: t('more.messages.desc'),
+        href: '/dashboard/messages'
       },
       {
         icon: User,

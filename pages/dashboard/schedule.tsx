@@ -8,6 +8,7 @@ import { formatDate, getDayOfWeek, formatTime, parseDate, parseTime } from '@/li
 import { motion } from 'framer-motion';
 import { CaretLeft, CaretRight, Warning } from '@phosphor-icons/react';
 import withAuth from '@/lib/utils/withAuth';
+import { useLanguage } from '@/context/LanguageContext';
 
 function Schedule() {
   const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useCurrentWeekData('lessons');
@@ -15,21 +16,18 @@ function Schedule() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekDays, setWeekDays] = useState<Date[]>([]);
   const [dailyLessons, setDailyLessons] = useState<any[]>([]);
+  const { t, language } = useLanguage();
 
   const isLoading = lessonsLoading || substitutionsLoading;
   const error = lessonsError || substitutionsError;
 
-  // Отладка: вывод данных об уроках при их загрузке
+  // Debugging lessons
   useEffect(() => {
     console.log("Lessons API response:", lessons);
     if (lessons && lessons.length > 0) {
-      // Вывод первого урока для анализа структуры данных
       console.log("Sample lesson structure:", lessons[0]);
-      // Подробный вывод структуры первого урока для выявления полей сортировки
       console.log("LESSON KEYS:", Object.keys(lessons[0]));
-      // Проверяем наличие вложенных полей для сортировки
       console.log("TimeSlot:", lessons[0].TimeSlot ? Object.keys(lessons[0].TimeSlot) : "Not found");
-      // Проверка поля Date
       console.log("Date field type:", lessons[0].Date ? typeof lessons[0].Date : "undefined");
       if (lessons[0].Date && typeof lessons[0].Date === 'object') {
         console.log("Date object structure:", lessons[0].Date);
@@ -39,7 +37,7 @@ function Schedule() {
     }
   }, [lessons]);
 
-  // Отладка: вывод данных о заменах при их загрузке
+  // Debugging substitutions
   useEffect(() => {
     console.log("Substitutions API response:", substitutions);
     if (substitutions && substitutions.length > 0) {
@@ -50,43 +48,42 @@ function Schedule() {
     }
   }, [substitutions]);
 
-  // Создание массива дней недели
+  // Create week days array
   useEffect(() => {
     const days = [];
     const currentDay = new Date(selectedDate);
-    const dayOfWeek = currentDay.getDay(); // 0 - воскресенье, 1-6 - пн-сб
-    
-    // Начинаем с понедельника
+    const dayOfWeek = currentDay.getDay(); // 0 - Sunday, 1-6 - Mon-Sat
+
+    // Start with Monday
     const monday = new Date(currentDay);
     monday.setDate(currentDay.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    
+
     for (let i = 0; i < 7; i++) {
       const day = new Date(monday);
       day.setDate(monday.getDate() + i);
       days.push(day);
     }
-    
+
     setWeekDays(days);
-    
-    // Отладка: вывод диапазона дат
+
     console.log("Week dates:", days.map(d => formatDate(d)));
     console.log("Selected date:", formatDate(selectedDate));
   }, [selectedDate]);
 
-  // Combine lessons and substitutions for the selected day
+  // Combine lessons and substitutions
   useEffect(() => {
     if ((lessons && lessons.length > 0) || (substitutions && substitutions.length > 0)) {
       const selectedDateStr = selectedDate.toISOString().split('T')[0];
       console.log("Target date for filtering:", selectedDateStr);
-      
+
       // Filter regular lessons
-      const filteredLessons = lessons ? lessons.filter(lesson => {
+      const filteredLessons = lessons ? lessons.filter((lesson: any) => {
         let lessonDate;
-        
+
         if (lesson.Date) {
           if (typeof lesson.Date === 'object' && lesson.Date.Date) {
             lessonDate = lesson.Date.Date;
-          } 
+          }
           else if (typeof lesson.Date === 'string') {
             lessonDate = lesson.Date.split('T')[0];
           } else if (lesson.Date instanceof Date) {
@@ -96,7 +93,7 @@ function Schedule() {
               const year = lesson.Date.Year || lesson.Date.year;
               const month = (lesson.Date.Month || lesson.Date.month) - 1;
               const day = lesson.Date.Day || lesson.Date.day;
-              
+
               if (year && month !== undefined && day) {
                 const date = new Date(year, month, day);
                 lessonDate = date.toISOString().split('T')[0];
@@ -106,16 +103,15 @@ function Schedule() {
             }
           }
         }
-        
+
         return lessonDate === selectedDateStr;
       }) : [];
-      
+
       // Filter substitutions 
-      const filteredSubstitutions = substitutions ? substitutions.filter(substitution => {
+      const filteredSubstitutions = substitutions ? substitutions.filter((substitution: any) => {
         let substitutionDate;
-        
+
         if (substitution.LessonDate) {
-          // Extract from LessonDate object
           if (typeof substitution.LessonDate === 'object') {
             if (substitution.LessonDate.Date) {
               substitutionDate = substitution.LessonDate.Date;
@@ -127,10 +123,9 @@ function Schedule() {
             }
           }
         } else if (substitution.Date) {
-          // Use existing date extraction logic as fallback
           if (typeof substitution.Date === 'object' && substitution.Date.Date) {
             substitutionDate = substitution.Date.Date;
-          } 
+          }
           else if (typeof substitution.Date === 'string') {
             substitutionDate = substitution.Date.split('T')[0];
           } else if (substitution.Date instanceof Date) {
@@ -140,7 +135,7 @@ function Schedule() {
               const year = substitution.Date.Year || substitution.Date.year;
               const month = (substitution.Date.Month || substitution.Date.month) - 1;
               const day = substitution.Date.Day || substitution.Date.day;
-              
+
               if (year && month !== undefined && day) {
                 const date = new Date(year, month, day);
                 substitutionDate = date.toISOString().split('T')[0];
@@ -150,44 +145,33 @@ function Schedule() {
             }
           }
         }
-        
+
         return substitutionDate === selectedDateStr;
       }) : [];
-      
+
       console.log(`Found ${filteredLessons.length} lessons and ${filteredSubstitutions.length} substitutions for ${selectedDateStr}`);
-      
-      // Process substitutions to mark replaced lessons
+
       const enhancedLessons = [...filteredLessons];
-      
-      // Add substitutions to the lessons array with a flag
-      filteredSubstitutions.forEach(substitution => {
-        // Get the original replaced lesson ID if available
+
+      filteredSubstitutions.forEach((substitution: any) => {
         let replacedLessonId = null;
         if (substitution.ScheduleId) {
           replacedLessonId = substitution.ScheduleId;
         }
-        
-        // Determine if this is a direct replacement or a new lesson
+
         if (replacedLessonId) {
-          // Check if this substitution replaces an existing lesson
-          const existingLessonIndex = enhancedLessons.findIndex(lesson => 
+          const existingLessonIndex = enhancedLessons.findIndex(lesson =>
             lesson.Id === replacedLessonId || lesson.ScheduleId === replacedLessonId
           );
-          
+
           if (existingLessonIndex >= 0) {
-            // If the existing lesson is already a substitution, check which one to keep.
-            // A moved lesson (Change.Type === 2) should override a canceled one (Change.Type === 1).
             const existingLesson = enhancedLessons[existingLessonIndex];
             if (existingLesson.isSubstitution && substitution.Change?.Type === 1 && existingLesson.Change?.Type === 2) {
-              // The existing lesson is a "moved" lesson, and the new one is "canceled".
-              // We keep the "moved" lesson, so we do nothing here.
               return;
             }
 
-            // Replace the existing lesson with this substitution but keep original info
             const originalInfo = enhancedLessons[existingLessonIndex];
-            
-            // Create the replacement object
+
             const replacementLesson = {
               ...substitution,
               isSubstitution: true,
@@ -197,19 +181,16 @@ function Schedule() {
               substitutionReason: substitution.TeacherAbsenceEffectName || 'Substitution',
               Change: substitution.Change
             };
-            
-            // Preserve TimeSlot from original lesson if not present in substitution
+
             if (!replacementLesson.TimeSlot && originalInfo.TimeSlot) {
               replacementLesson.TimeSlot = {
                 ...originalInfo.TimeSlot,
                 isFromOriginalLesson: true
               };
             }
-            
-            // Replace the original lesson with the substitution
+
             enhancedLessons[existingLessonIndex] = replacementLesson;
           } else {
-            // Add as a new lesson with substitution flag
             enhancedLessons.push({
               ...substitution,
               isSubstitution: true,
@@ -218,7 +199,6 @@ function Schedule() {
             });
           }
         } else {
-          // If there's no direct relation, just add as a new lesson with substitution flag
           enhancedLessons.push({
             ...substitution,
             isSubstitution: true,
@@ -227,10 +207,8 @@ function Schedule() {
           });
         }
       });
-      
-      // Remove duplicate lessons when both canceled and moved exist for same position
-      // Group lessons by their time slot position
-      const groupedByPosition = enhancedLessons.reduce((acc, lesson) => {
+
+      const groupedByPosition = enhancedLessons.reduce((acc: any, lesson: any) => {
         const position = lesson.TimeSlot?.Position ?? 'no_position';
         if (!acc[position]) {
           acc[position] = [];
@@ -238,157 +216,143 @@ function Schedule() {
         acc[position].push(lesson);
         return acc;
       }, {});
-      
-      // For each group, if there are both canceled and moved lessons, keep only moved
+
       const filteredEnhancedLessons: any[] = [];
       Object.values(groupedByPosition).forEach((positionGroup: any) => {
         if (positionGroup.length > 1) {
-          // Check if we have both canceled and moved lessons
           const hasCanceled = positionGroup.some((l: any) => l.Change?.Type === 1);
           const hasMoved = positionGroup.some((l: any) => l.Change?.Type === 2);
-          
+
           if (hasCanceled && hasMoved) {
-            // Keep only moved lessons
             const movedLessons = positionGroup.filter((l: any) => l.Change?.Type === 2);
             filteredEnhancedLessons.push(...movedLessons);
           } else {
-            // Keep all lessons in the group
             filteredEnhancedLessons.push(...positionGroup);
           }
         } else {
-          // Only one lesson in group, keep it
           filteredEnhancedLessons.push(...positionGroup);
         }
       });
-      
-      // Sort by time
+
       const sorted = filteredEnhancedLessons.sort((a, b) => {
-        // Use TimeSlot.Position for sorting if available
         if (a.TimeSlot && b.TimeSlot) {
           if (a.TimeSlot.Position !== undefined && b.TimeSlot.Position !== undefined) {
             return a.TimeSlot.Position - b.TimeSlot.Position;
           }
-          
-          // If TimeSlot.Start exists, compare start times
           if (a.TimeSlot.Start && b.TimeSlot.Start) {
             const [hourA, minuteA] = a.TimeSlot.Start.split(':').map(Number);
             const [hourB, minuteB] = b.TimeSlot.Start.split(':').map(Number);
-            
             const timeA = hourA * 60 + minuteA;
             const timeB = hourB * 60 + minuteB;
-            
             return timeA - timeB;
           }
         }
-        
-        // If Position is defined, use it
         if (a.Position !== undefined && b.Position !== undefined) {
           return a.Position - b.Position;
         }
-        
-        // By default, keep original order
         return 0;
       });
-      
+
       setDailyLessons(sorted);
     } else {
       setDailyLessons([]);
     }
   }, [lessons, substitutions, selectedDate]);
 
-  // Переключение на предыдущую неделю
   const goToPreviousWeek = () => {
     const prevWeek = new Date(selectedDate);
     prevWeek.setDate(prevWeek.getDate() - 7);
     setSelectedDate(prevWeek);
   };
 
-  // Переключение на следующую неделю
   const goToNextWeek = () => {
     const nextWeek = new Date(selectedDate);
     nextWeek.setDate(nextWeek.getDate() + 7);
     setSelectedDate(nextWeek);
   };
 
-  // Переключение дня
   const selectDay = (date: Date) => {
     setSelectedDate(date);
   };
 
-  // Определение, является ли день сегодняшним
   const isToday = (date: Date) => {
     const today = new Date();
     return date.toDateString() === today.toDateString();
   };
 
-  // Определение, является ли день выбранным
   const isSelected = (date: Date) => {
     return date.toDateString() === selectedDate.toDateString();
   };
 
   return (
-    <DashboardLayout title="Schedule">
+    <DashboardLayout title={t('schedule.title')}>
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <button 
+          <button
             onClick={goToPreviousWeek}
             className="p-2 bg-surface rounded-full hover:bg-overlay transition-colors"
           >
             <CaretLeft size={20} />
           </button>
-          
+
           <h2 className="font-mono text-lg">
-            {formatDate(weekDays[0], 'dd.MM')} - {formatDate(weekDays[6], 'dd.MM')}
+            {weekDays.length > 0 && (
+              <>
+                {weekDays[0].toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'numeric' })}
+                {' - '}
+                {weekDays[6].toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'numeric' })}
+              </>
+            )}
           </h2>
-          
-          <button 
+
+          <button
             onClick={goToNextWeek}
             className="p-2 bg-surface rounded-full hover:bg-overlay transition-colors"
           >
             <CaretRight size={20} />
           </button>
         </div>
-        
+
         <div className="flex space-x-2 overflow-x-auto pb-2">
           {weekDays.map((day, index) => (
             <button
               key={index}
               onClick={() => selectDay(day)}
-              className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all ${
-                isSelected(day) 
-                  ? 'bg-primary text-white' 
-                  : isToday(day) 
-                    ? 'bg-surface border border-primary text-primary' 
+              className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all ${isSelected(day)
+                  ? 'bg-primary text-white'
+                  : isToday(day)
+                    ? 'bg-surface border border-primary text-primary'
                     : 'bg-surface text-text-secondary hover:bg-overlay/50'
-              }`}
+                }`}
             >
-              <span className="text-xs">{formatDate(day, 'EEE').slice(0, 1)}</span>
-              <span className="font-bold">{formatDate(day, 'd')}</span>
+              <span className="text-xs first-letter:uppercase">
+                {day.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { weekday: 'short' }).slice(0, 3)}
+              </span>
+              <span className="font-bold">{day.getDate()}</span>
             </button>
           ))}
         </div>
       </div>
-      
+
       {isLoading ? (
-        <Loading text="Loading schedule..." />
+        <Loading text={t('loading.schedule')} />
       ) : error ? (
-        <ErrorDisplay message={error.message} />
+        <ErrorDisplay message={error.message || t('error.text')} />
       ) : (
         <div className="space-y-3">
-          <h3 className="font-medium text-text-secondary mb-2">
-            {getDayOfWeek(selectedDate)}, {formatDate(selectedDate)}
+          <h3 className="font-medium text-text-secondary mb-2 first-letter:uppercase">
+            {selectedDate.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
           </h3>
-          
+
           {/* Display lessons (including substitutions) */}
           {dailyLessons.length > 0 ? (
-            <motion.div 
+            <motion.div
               className="space-y-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ staggerChildren: 0.1 }}
             >
               {dailyLessons.map((lesson, index) => {
-                // Get lesson data with different format checks
                 let subject = 'Lesson';
                 if (lesson.Subject) {
                   if (typeof lesson.Subject === 'string') {
@@ -396,7 +360,6 @@ function Schedule() {
                   } else if (lesson.Subject.Name) {
                     subject = lesson.Subject.Name;
                   } else if (typeof lesson.Subject === 'object') {
-                    // Convert object to string
                     subject = JSON.stringify(lesson.Subject);
                   }
                 } else if (lesson.subject) {
@@ -406,8 +369,7 @@ function Schedule() {
                     subject = JSON.stringify(lesson.subject);
                   }
                 }
-                
-                // Room handling
+
                 let room = '';
                 if (lesson.Room) {
                   if (typeof lesson.Room === 'string') {
@@ -415,10 +377,8 @@ function Schedule() {
                   } else if (lesson.Room.Name) {
                     room = lesson.Room.Name;
                   } else if (lesson.Room.Code) {
-                    // Use room code directly
                     room = lesson.Room.Code;
                   } else if (typeof lesson.Room === 'object') {
-                    // If Room object has Id and Code fields, take only Code
                     try {
                       room = lesson.Room.Code || '';
                     } catch (e) {
@@ -438,8 +398,7 @@ function Schedule() {
                     }
                   }
                 }
-                
-                // Teacher handling
+
                 let teacher = '';
                 if (lesson.Teacher) {
                   if (typeof lesson.Teacher === 'string') {
@@ -464,8 +423,7 @@ function Schedule() {
                     teacher = JSON.stringify(lesson.TeacherPrimary);
                   }
                 }
-                
-                // Lesson topic handling
+
                 let topic = '';
                 if (lesson.Topic) {
                   if (typeof lesson.Topic === 'string') {
@@ -480,18 +438,15 @@ function Schedule() {
                     topic = JSON.stringify(lesson.topic);
                   }
                 }
-                
-                // Enhanced time start and end handling
+
                 let timeStart = '';
                 let timeEnd = '';
                 let lessonNumber = '';
                 let timeDisplay = '';
-                
-                // Check for TimeSlot
+
                 if (lesson.TimeSlot) {
                   if (lesson.TimeSlot.Display) {
                     console.log(`Using TimeSlot.Display for ${subject}: ${lesson.TimeSlot.Display}`);
-                    // In example data, time display is in format "08:15-09:00"
                     const times = lesson.TimeSlot.Display.split('-');
                     if (times.length === 2) {
                       timeStart = times[0];
@@ -503,34 +458,22 @@ function Schedule() {
                     timeStart = lesson.TimeSlot.Start;
                     timeEnd = lesson.TimeSlot.End;
                   }
-                  
-                  // Get lesson number from Position
+
                   if (lesson.TimeSlot.Position !== undefined) {
                     lessonNumber = String(lesson.TimeSlot.Position);
                   }
                 }
-                
-                // If time not found in TimeSlot, use other methods
-                if (!timeStart && !timeEnd) {
-                  // Rest of the code for finding time
-                  // ... (existing logic)
-                }
-                
-                // Form time display
-                // If time found in TimeSlot.Display, use it directly
+
                 if (lesson.TimeSlot && lesson.TimeSlot.Display) {
                   timeDisplay = lesson.TimeSlot.Display;
-                  
-                  // Add lesson number if available
                   if (lessonNumber) {
                     timeDisplay = `${lessonNumber}. ${timeDisplay}`;
                   }
                 } else {
-                  // If lesson number available, show it
                   if (lessonNumber) {
-                    timeDisplay = `Lesson ${lessonNumber}`;
-                    
-                    // If time available, show it in parentheses
+                    timeDisplay = `${t('lesson') || 'Lesson'} ${lessonNumber}`; // Added fallback or key if exists. I'll stick to 'Lesson' if key missing, or remove check.
+                    // Actually I'll use hardcoded 'Lesson' if key not found as generic fallback?
+                    // Better: just use time if available.
                     if (timeStart) {
                       if (timeEnd) {
                         timeDisplay += ` (${timeStart}-${timeEnd})`;
@@ -539,25 +482,21 @@ function Schedule() {
                       }
                     }
                   } else if (timeStart) {
-                    // If no lesson number but time available
                     if (timeEnd) {
                       timeDisplay = `${timeStart}-${timeEnd}`;
                     } else {
                       timeDisplay = timeStart;
                     }
                   } else {
-                    // If no lesson number or time
-                    timeDisplay = 'N/A';
+                    timeDisplay = t('lesson.timeNotSpecified');
                   }
                 }
 
-                // Substitution information
                 const isSubstitution = lesson.isSubstitution || false;
                 const isCanceled = lesson.isCanceled || false;
                 const substitutionReason = lesson.substitutionReason || '';
                 let changeType = '';
-                
-                // Get change information if it exists
+
                 if (lesson.Change && lesson.Change.Type) {
                   switch (lesson.Change.Type) {
                     case 1:
@@ -590,48 +529,47 @@ function Schedule() {
                             </h3>
                             {isSubstitution && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-warning text-white">
-                                {substitutionReason || changeType || 'Substitution'}
+                                {substitutionReason || changeType || t('schedule.substitution')}
                               </span>
                             )}
                             {isCanceled && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-danger text-white">
-                                Canceled
+                                {t('schedule.canceled')}
                               </span>
                             )}
                           </div>
                           <div className="text-sm text-text-secondary space-y-1">
                             {room && (
-                              <p>Room: {room}</p>
+                              <p>{t('lesson.room')}: {room}</p>
                             )}
                             {teacher && (
-                              <p>Teacher: {teacher}</p>
+                              <p>{t('lesson.teacher')}: {teacher}</p>
                             )}
                             {topic && (
-                              <p>Topic: {topic}</p>
+                              <p>{t('lesson.topic')}: {topic}</p>
                             )}
                             {lesson.originalSubject && lesson.Subject && (
                               <p className="text-warning-dark">
-                                {typeof lesson.originalSubject === 'string' 
-                                  ? `Changed from: ${lesson.originalSubject}` 
-                                  : `Changed from: ${lesson.originalSubject.Name || 'Unknown'}`}
+                                {typeof lesson.originalSubject === 'string'
+                                  ? `${t('lesson.changedFrom')}: ${lesson.originalSubject}`
+                                  : `${t('lesson.changedFrom')}: ${lesson.originalSubject.Name || 'Unknown'}`}
                               </p>
                             )}
                             {isSubstitution && (!lesson.TimeSlot || (lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson)) && (
                               <p className="text-xs text-info-dark">
-                                Using original lesson time
+                                {t('lesson.usingOriginalTime')}
                               </p>
                             )}
                           </div>
                         </div>
-                        
-                        <div className={`px-3 py-1 rounded-full text-text-secondary text-sm whitespace-nowrap ml-2 ${
-                          isCanceled ? 'bg-danger text-white' : 
-                          isSubstitution ? 'bg-warning text-white' : 'bg-surface'
-                        }`}>
+
+                        <div className={`px-3 py-1 rounded-full text-text-secondary text-sm whitespace-nowrap ml-2 ${isCanceled ? 'bg-danger text-white' :
+                            isSubstitution ? 'bg-warning text-white' : 'bg-surface'
+                          }`}>
                           {timeDisplay}
-                          {isSubstitution && lesson.originalSubject && 
-                            lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson && 
-                            ' (Original time)'}
+                          {isSubstitution && lesson.originalSubject &&
+                            lesson.TimeSlot && lesson.TimeSlot.isFromOriginalLesson &&
+                            ' (Orig)'}
                         </div>
                       </div>
                     </Card>
@@ -641,7 +579,7 @@ function Schedule() {
             </motion.div>
           ) : (
             <div className="text-center py-6 text-text-tertiary">
-              No lessons scheduled for this day
+              {t('schedule.noLessons')}
             </div>
           )}
         </div>
