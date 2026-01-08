@@ -4,11 +4,11 @@ import Loading from '@/components/ui/Loading';
 import Card from '@/components/ui/Card';
 import { useQuery } from 'react-query';
 import axios from 'axios';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  ChartPie, 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChartPie,
   Calendar,
   CaretLeft,
   CaretRight
@@ -24,10 +24,10 @@ function Attendance() {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const formattedCurrentDate = useMemo(() => {
-    return currentDate.toLocaleDateString('en-US', { 
+    return currentDate.toLocaleDateString('en-US', {
       day: 'numeric',
-      month: 'long', 
-      year: 'numeric' 
+      month: 'long',
+      year: 'numeric'
     });
   }, [currentDate]);
 
@@ -46,7 +46,7 @@ function Attendance() {
       return newDate;
     });
   };
-  
+
   // Getting attendance type from different data formats
   const getPresenceTypeId = (record: any): number => {
     if (record.PresenceType) {
@@ -57,7 +57,7 @@ function Attendance() {
           if (record.PresenceType.Id === 1228) return 0; // Absence
           if (record.PresenceType.Id === 1229) return 1; // Presence
           if (record.PresenceType.Id === 1231) return 2; // Late
-          
+
           console.log('Using PresenceType.Id:', record.PresenceType.Id);
           return record.PresenceType.Id;
         } else if (record.PresenceType.Type !== undefined) {
@@ -66,30 +66,30 @@ function Attendance() {
           return record.PresenceType.Type;
         }
       }
-      
+
       // If PresenceType is a number
       if (typeof record.PresenceType === 'number') {
         // Mapping non-standard codes to standard ones
         if (record.PresenceType === 1228) return 0; // Absence
         if (record.PresenceType === 1229) return 1; // Presence
         if (record.PresenceType === 1231) return 2; // Late
-        
+
         console.log('Using PresenceType as number:', record.PresenceType);
         return record.PresenceType;
       }
     }
-    
+
     // Format with presenceTypeId directly
     if (typeof record.presenceTypeId === 'number') {
       // Mapping non-standard codes to standard ones
       if (record.presenceTypeId === 1228) return 0; // Absence
       if (record.presenceTypeId === 1229) return 1; // Presence
       if (record.presenceTypeId === 1231) return 2; // Late
-      
+
       console.log('Using presenceTypeId:', record.presenceTypeId);
       return record.presenceTypeId;
     }
-    
+
     // If we have a string representation of type
     if (record.presenceType) {
       let id = -1;
@@ -103,23 +103,23 @@ function Attendance() {
       console.log('Using presenceType string:', record.presenceType, '→', id);
       return id;
     }
-    
+
     // Check for LessonId property (characteristic for Vulcan API)
     if (record.LessonId && record.PresenceType === undefined) {
       console.log('Assuming default presence type 0 for record with LessonId');
       return 0; // Assume it's presence by default
     }
-    
+
     // Get ID from Type field (specific to certain API formats)
     if (record.Type !== undefined) {
       console.log('Using Type field:', record.Type);
       return typeof record.Type === 'number' ? record.Type : -1;
     }
-    
+
     console.log('Could not determine presence type, defaulting to 0');
     return 0; // For this specific API we assume presence by default
   };
-  
+
   // Getting attendance data for the current day
   const { data: attendance, isLoading, error } = useQuery(['attendance', toYYYYMMDD(currentDate)], async () => {
     const dateStr = toYYYYMMDD(currentDate);
@@ -146,14 +146,14 @@ function Attendance() {
     });
     return data;
   });
-  
+
   // Debug received data
   useEffect(() => {
     if (attendance && attendance.length > 0) {
       console.log('Attendance data:', attendance[0]);
       console.log('Total number of records:', attendance.length);
       console.log('All keys of first record:', Object.keys(attendance[0]));
-      
+
       // Check record dates for debugging
       const todayStr = currentDate.toISOString().split('T')[0];
       attendance.forEach((record: any, index: number) => {
@@ -161,15 +161,15 @@ function Attendance() {
       });
     }
   }, [attendance, currentDate]);
-  
+
   // Use all attendance data without filtering by day
   const filteredAttendance = useMemo(() => {
     if (!attendance || !attendance.length) return [];
-    
+
     // Check each record's day only in debug mode and keep all records
     return attendance;
   }, [attendance]);
-  
+
   // Attendance statistics
   const stats = useMemo(() => {
     if (!filteredAttendance || !filteredAttendance.length) {
@@ -184,15 +184,15 @@ function Attendance() {
         latePercentage: 0
       };
     }
-    
+
     const total = filteredAttendance.length;
-    
+
     let present = 0;
     let absent = 0;
     let late = 0;
     let excused = 0;
 
-    filteredAttendance.forEach(a => {
+    filteredAttendance.forEach((a: any) => {
       const { status } = formatAttendance(a);
       switch (status) {
         case 'Present':
@@ -209,10 +209,10 @@ function Attendance() {
           break;
       }
     });
-    
+
     // Make sure percentage sum doesn't exceed 100%
     const calculatedTotal = present + absent + late + excused;
-    
+
     return {
       total,
       present,
@@ -225,6 +225,62 @@ function Attendance() {
     };
   }, [filteredAttendance]);
 
+  // Year-wide statistics based on allAttendance
+  const yearStats = useMemo(() => {
+    if (!allAttendance || !allAttendance.length) {
+      return {
+        total: 0,
+        present: 0,
+        absent: 0,
+        late: 0,
+        excused: 0,
+        presentPercentage: 0,
+        absentPercentage: 0,
+        latePercentage: 0
+      };
+    }
+
+    const total = allAttendance.length;
+
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    let excused = 0;
+
+    allAttendance.forEach((a: any) => {
+      // Use getPresenceTypeId directly for more accurate counting
+      const typeId = getPresenceTypeId(a);
+      // 0: absence, 1: presence, 2: late, 3: excused
+
+      // Also check standard status formatted
+      const { status } = formatAttendance(a);
+
+      if (status === 'Present' || typeId === 1) present++;
+      else if (status === 'Absent' || typeId === 0) absent++;
+      else if (status === 'Late' || typeId === 2) late++;
+      else if (status === 'Excused' || typeId === 3) excused++;
+      // Fallback for known IDs if formatAttendance fails
+      else if (a.PresenceType?.Id === 1229) present++; // Presence
+      else if (a.PresenceType?.Id === 1228) absent++; // Absence
+    });
+
+    // Make sure percentage sum doesn't exceed 100%
+    const calculatedTotal = present + absent + late + excused;
+    // Use total or calculatedTotal depending on if we want to include uncounted types
+    const baseTotal = calculatedTotal || total;
+
+    return {
+      total,
+      present,
+      absent,
+      late,
+      excused,
+      presentPercentage: baseTotal ? Math.round((present / baseTotal) * 100) : 0,
+      absentPercentage: baseTotal ? Math.round((absent / baseTotal) * 100) : 0,
+      latePercentage: baseTotal ? Math.round((late / baseTotal) * 100) : 0
+    };
+  }, [allAttendance]);
+
   const averagePresence = useMemo(() => {
     if (!allAttendance || !allAttendance.length) return 0;
 
@@ -235,20 +291,20 @@ function Attendance() {
 
     return Math.round((presentLessons / totalLessons) * 100);
   }, [allAttendance]);
-  
+
   // Group attendance by day
   const groupedByDay = useMemo(() => {
     if (!filteredAttendance || !filteredAttendance.length) return [];
-    
+
     const grouped = new Map();
-    
+
     // Check for Date or Lesson.Date field in any record
-    const hasDates = filteredAttendance.some((record: any) => 
-      record.Date || 
-      record.date || 
+    const hasDates = filteredAttendance.some((record: any) =>
+      record.Date ||
+      record.date ||
       (record.Lesson && record.Lesson.Date)
     );
-    
+
     // Use only one grouping method to avoid duplication
     if (!hasDates) {
       // If no date data, group by attendance type
@@ -259,7 +315,7 @@ function Attendance() {
       filteredAttendance.forEach((record: any) => {
         // Format date using our enhanced function
         let date = 'Today'; // Use "Today" as default instead of "No date"
-        
+
         if (record.Date) {
           date = formatDate(record.Date);
         } else if (record.date) {
@@ -267,29 +323,29 @@ function Attendance() {
         } else if (record.Lesson && record.Lesson.Date) {
           date = formatDate(record.Lesson.Date);
         }
-        
+
         if (!grouped.has(date)) {
           grouped.set(date, []);
         }
-        
+
         grouped.get(date).push(record);
       });
     }
-    
+
     // Sort by date (with "Today" always at the beginning)
     return Array.from(grouped.entries()).sort((a, b) => {
       if (a[0] === 'Today') return -1;
       if (b[0] === 'Today') return 1;
-      
+
       if (a[0] === 'No date') return 1;
       if (b[0] === 'No date') return -1;
-      
+
       const dateA = new Date(a[0].split('.').reverse().join('-'));
       const dateB = new Date(b[0].split('.').reverse().join('-'));
       return dateB.getTime() - dateA.getTime(); // Sort in descending order
     });
   }, [filteredAttendance]);
-  
+
   // Get icon based on attendance type
   const getAttendanceIcon = (attendanceRecord: any) => {
     const { status } = formatAttendance(attendanceRecord);
@@ -306,7 +362,7 @@ function Attendance() {
         return <XCircle size={20} weight="fill" className="text-text-secondary" />;
     }
   };
-  
+
   return (
     <DashboardLayout title="Attendance">
       {isLoading ? (
@@ -329,13 +385,13 @@ function Attendance() {
                 <CaretRight size={20} />
               </button>
             </div>
-            
+
             <Card className="p-4">
               <h3 className="text-lg font-mono font-bold mb-3 flex items-center">
                 <ChartPie size={20} className="mr-2 text-primary" />
                 Attendance Statistics
               </h3>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                 <div className="bg-surface p-3 rounded-lg col-span-2 md:col-span-4">
                   <div className="text-text-secondary text-sm mb-1">Average Presence (since Sep 2)</div>
@@ -346,28 +402,28 @@ function Attendance() {
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Absence</div>
                   <div className="flex items-center">
-                    <div className="text-xl font-bold text-red-500 mr-2">{stats.presentPercentage}%</div>
-                    <div className="text-sm text-text-secondary">({stats.present} of {stats.total})</div>
+                    <div className="text-xl font-bold text-red-500 mr-2">{yearStats.absentPercentage}%</div>
+                    <div className="text-sm text-text-secondary">({yearStats.absent} of {yearStats.total})</div>
                   </div>
                 </div>
-                
+
                 <div className="bg-surface p-3 rounded-lg">
                   <div className="text-text-secondary text-sm mb-1">Presence</div>
                   <div className="flex items-center">
-                    <div className="text-xl font-bold text-green-500 mr-2">{stats.absentPercentage}%</div>
-                    <div className="text-sm text-text-secondary">({stats.absent} of {stats.total})</div>
+                    <div className="text-xl font-bold text-green-500 mr-2">{yearStats.presentPercentage}%</div>
+                    <div className="text-sm text-text-secondary">({yearStats.present} of {yearStats.total})</div>
                   </div>
                 </div>
               </div>
             </Card>
           </div>
-          
+
           <div className="space-y-5">
             {groupedByDay.length > 0 ? (
               groupedByDay.map(([date, records]) => (
                 <div key={date} className="space-y-2">
                   <h3 className="text-lg font-mono font-bold px-1">{date}</h3>
-                  
+
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -377,7 +433,7 @@ function Attendance() {
                     {records.map((record: any, index: number) => {
                       const presenceTypeId = getPresenceTypeId(record);
                       const attendanceData = formatAttendance(record);
-                      
+
                       // Get subject name
                       let subject = 'Lesson';
                       if (record.Subject) {
@@ -395,22 +451,22 @@ function Attendance() {
                           subject = String(record.Lesson.Subject);
                         }
                       }
-                      
+
                       // Get start and end times
                       const timeStart = formatTime(
-                        record.TimeStart || record.timeStart || 
-                        (record.TimeSlot && record.TimeSlot.TimeStart ? record.TimeSlot.TimeStart : null) ||
-                        (record.Lesson && record.Lesson.TimeStart ? record.Lesson.TimeStart : null) ||
-                        (record.Lesson && record.Lesson.TimeSlot && record.Lesson.TimeSlot.TimeStart ? record.Lesson.TimeSlot.TimeStart : null)
+                        record.TimeStart || record.timeStart ||
+                        (record.TimeSlot && (record.TimeSlot.Start || record.TimeSlot.TimeStart)) ||
+                        (record.Lesson && record.Lesson.TimeSlot && (record.Lesson.TimeSlot.Start || record.Lesson.TimeSlot.TimeStart)) ||
+                        // Try to extract from string if needed
+                        (record.Date && typeof record.Date === 'string' && record.Date.includes('T') ? record.Date : null)
                       );
-                      
+
                       const timeEnd = formatTime(
-                        record.TimeEnd || record.timeEnd || 
-                        (record.TimeSlot && record.TimeSlot.TimeEnd ? record.TimeSlot.TimeEnd : null) ||
-                        (record.Lesson && record.Lesson.TimeEnd ? record.Lesson.TimeEnd : null) ||
-                        (record.Lesson && record.Lesson.TimeSlot && record.Lesson.TimeSlot.TimeEnd ? record.Lesson.TimeSlot.TimeEnd : null)
+                        record.TimeEnd || record.timeEnd ||
+                        (record.TimeSlot && (record.TimeSlot.End || record.TimeSlot.TimeEnd)) ||
+                        (record.Lesson && record.Lesson.TimeSlot && (record.Lesson.TimeSlot.End || record.Lesson.TimeSlot.TimeEnd))
                       );
-                      
+
                       // Get teacher name
                       let teacher = '';
                       if (record.Teacher) {
@@ -434,10 +490,10 @@ function Attendance() {
                           teacher = record.Lesson.TeacherPrimary.DisplayName;
                         }
                       }
-                      
+
                       // Get lesson ID for display
                       const lessonId = record.LessonId || (record.Lesson ? record.Lesson.Id : null);
-                      
+
                       return (
                         <motion.div
                           key={index}
@@ -450,7 +506,7 @@ function Attendance() {
                               <div className="flex-shrink-0">
                                 {getAttendanceIcon(record)}
                               </div>
-                              
+
                               <div className="flex-1">
                                 <div className="flex justify-between">
                                   <h4 className="font-medium">{subject}</h4>
@@ -458,18 +514,18 @@ function Attendance() {
                                     {attendanceData.status}
                                   </span>
                                 </div>
-                                
+
                                 <div className="text-sm text-text-secondary">
                                   {timeStart !== 'N/A' && timeEnd !== 'N/A' ? (
                                     <span>{timeStart} - {timeEnd}</span>
                                   ) : (
                                     <span>n/a</span>
                                   )}
-                                  
+
                                   {teacher && (
                                     <span className="ml-2">• {teacher}</span>
                                   )}
-                                  
+
                                   {lessonId && (
                                     <span className="ml-2 text-xs">ID: {lessonId}</span>
                                   )}
