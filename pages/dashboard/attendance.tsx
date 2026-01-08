@@ -13,7 +13,8 @@ import {
   CaretLeft,
   CaretRight
 } from '@phosphor-icons/react';
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import CalendarModal from '@/components/ui/CalendarModal';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { motion } from 'framer-motion';
 
@@ -22,7 +23,7 @@ const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 function Attendance() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const formattedCurrentDate = useMemo(() => {
     return currentDate.toLocaleDateString('en-US', {
@@ -50,20 +51,12 @@ function Attendance() {
 
 
   const handleDateClick = () => {
-    if (dateInputRef.current) {
-      if (typeof dateInputRef.current.showPicker === 'function') {
-        dateInputRef.current.showPicker();
-      } else {
-        dateInputRef.current.focus();
-        dateInputRef.current.click();
-      }
-    }
+    setIsCalendarOpen(true);
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      setCurrentDate(new Date(e.target.value));
-    }
+  const handleDateSelect = (date: Date) => {
+    setCurrentDate(date);
+    setIsCalendarOpen(false);
   };
 
   // Getting attendance type from different data formats
@@ -401,18 +394,18 @@ function Attendance() {
                   <Calendar size={20} className="mr-2 text-primary" />
                   {formattedCurrentDate}
                 </h2>
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
-                  value={toYYYYMMDD(currentDate)}
-                  onChange={handleDateChange}
-                />
               </div>
               <button onClick={handleNextDay} className="p-2 rounded-full hover:bg-surface transition-colors">
                 <CaretRight size={20} />
               </button>
             </div>
+
+            <CalendarModal
+              isOpen={isCalendarOpen}
+              onClose={() => setIsCalendarOpen(false)}
+              selectedDate={currentDate}
+              onSelectDate={handleDateSelect}
+            />
 
             <Card className="p-4">
               <h3 className="text-lg font-mono font-bold mb-3 flex items-center">

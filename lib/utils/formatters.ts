@@ -238,7 +238,8 @@ export const formatAttendance = (attendance: any): { status: string, color: stri
     case 3:
       return { status: 'Excused', color: 'text-blue-500' };
     default:
-      return { status: 'Unknown', color: 'text-text-secondary' };
+      console.log('Unknown presenceTypeId:', presenceTypeId, 'Full record:', attendance);
+      return { status: `Unknown (${presenceTypeId})`, color: 'text-text-secondary' };
   }
 };
 
