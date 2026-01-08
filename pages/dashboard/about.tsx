@@ -20,7 +20,7 @@ import { useLanguage } from '@/context/LanguageContext';
 const About: React.FC = () => {
   const [userData, setUserData] = useState({ id: 'N/A', unitId: 'N/A' });
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const data = getUserData();
@@ -33,7 +33,9 @@ const About: React.FC = () => {
   }, []);
 
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0';
-  const changelog = process.env.NEXT_PUBLIC_LATEST_COMMIT_MESSAGE || 'No changes to display.';
+  const changelog = language === 'pl'
+    ? (process.env.NEXT_PUBLIC_CHANGELOG_PL || 'Brak zmian do wyświetlenia.')
+    : (process.env.NEXT_PUBLIC_CHANGELOG_EN || 'No changes to display.');
 
   return (
     <DashboardLayout title={t('about.title')}>
