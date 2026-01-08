@@ -13,7 +13,7 @@ import {
   CaretLeft,
   CaretRight
 } from '@phosphor-icons/react';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { motion } from 'framer-motion';
 
@@ -22,6 +22,7 @@ const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 function Attendance() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const formattedCurrentDate = useMemo(() => {
     return currentDate.toLocaleDateString('en-US', {
@@ -45,6 +46,24 @@ function Attendance() {
       newDate.setDate(newDate.getDate() + 1);
       return newDate;
     });
+  }; // End of handleNextDay definition
+
+
+  const handleDateClick = () => {
+    if (dateInputRef.current) {
+      if (typeof dateInputRef.current.showPicker === 'function') {
+        dateInputRef.current.showPicker();
+      } else {
+        dateInputRef.current.focus();
+        dateInputRef.current.click();
+      }
+    }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      setCurrentDate(new Date(e.target.value));
+    }
   };
 
   // Getting attendance type from different data formats
@@ -377,10 +396,19 @@ function Attendance() {
               <button onClick={handlePrevDay} className="p-2 rounded-full hover:bg-surface transition-colors">
                 <CaretLeft size={20} />
               </button>
-              <h2 className="font-mono text-lg flex items-center mx-4">
-                <Calendar size={20} className="mr-2 text-primary" />
-                {formattedCurrentDate}
-              </h2>
+              <div className="relative mx-4 group cursor-pointer" onClick={handleDateClick}>
+                <h2 className="font-mono text-lg flex items-center group-hover:text-primary transition-colors">
+                  <Calendar size={20} className="mr-2 text-primary" />
+                  {formattedCurrentDate}
+                </h2>
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
+                  value={toYYYYMMDD(currentDate)}
+                  onChange={handleDateChange}
+                />
+              </div>
               <button onClick={handleNextDay} className="p-2 rounded-full hover:bg-surface transition-colors">
                 <CaretRight size={20} />
               </button>
@@ -452,20 +480,51 @@ function Attendance() {
                         }
                       }
 
-                      // Get start and end times
-                      const timeStart = formatTime(
-                        record.TimeStart || record.timeStart ||
-                        (record.TimeSlot && (record.TimeSlot.Start || record.TimeSlot.TimeStart)) ||
-                        (record.Lesson && record.Lesson.TimeSlot && (record.Lesson.TimeSlot.Start || record.Lesson.TimeSlot.TimeStart)) ||
-                        // Try to extract from string if needed
-                        (record.Date && typeof record.Date === 'string' && record.Date.includes('T') ? record.Date : null)
-                      );
+                      // Get start and end times - IMPROVED EXTRACTION
+                      let sTime = null;
+                      let eTime = null;
 
-                      const timeEnd = formatTime(
-                        record.TimeEnd || record.timeEnd ||
-                        (record.TimeSlot && (record.TimeSlot.End || record.TimeSlot.TimeEnd)) ||
-                        (record.Lesson && record.Lesson.TimeSlot && (record.Lesson.TimeSlot.End || record.Lesson.TimeSlot.TimeEnd))
-                      );
+                      // 1. Try direct fields
+                      if (record.TimeStart) sTime = record.TimeStart;
+                      else if (record.timeStart) sTime = record.timeStart;
+
+                      if (record.TimeEnd) eTime = record.TimeEnd;
+                      else if (record.timeEnd) eTime = record.timeEnd;
+
+                      // 2. Try TimeSlot fields
+                      if (!sTime && record.TimeSlot) {
+                        sTime = record.TimeSlot.Start || record.TimeSlot.TimeStart || record.TimeSlot.start || record.TimeSlot.timeStart;
+                      }
+                      if (!eTime && record.TimeSlot) {
+                        eTime = record.TimeSlot.End || record.TimeSlot.TimeEnd || record.TimeSlot.end || record.TimeSlot.timeEnd;
+                      }
+
+                      // 3. Try Lesson object
+                      if (!sTime && record.Lesson) {
+                        sTime = record.Lesson.TimeStart || record.Lesson.timeStart;
+                        if (!sTime && record.Lesson.TimeSlot) {
+                          sTime = record.Lesson.TimeSlot.Start || record.Lesson.TimeSlot.TimeStart;
+                        }
+                      }
+                      if (!eTime && record.Lesson) {
+                        eTime = record.Lesson.TimeEnd || record.Lesson.timeEnd;
+                        if (!eTime && record.Lesson.TimeSlot) {
+                          eTime = record.Lesson.TimeSlot.End || record.Lesson.TimeSlot.TimeEnd;
+                        }
+                      }
+
+                      // 4. Try Date/Datetime field as last resort for start time
+                      if (!sTime && (record.Date || record.Datetime)) {
+                        sTime = record.Date || record.Datetime;
+                      }
+
+                      // 5. If still nothing, and we have a Change object (common in Vulcan)
+                      if (!sTime && record.Change) {
+                        if (record.Change.LessonDate) sTime = record.Change.LessonDate;
+                      }
+
+                      const timeStart = formatTime(sTime);
+                      const timeEnd = formatTime(eTime);
 
                       // Get teacher name
                       let teacher = '';
