@@ -4,6 +4,7 @@ import Loading from '@/components/ui/Loading';
 import Card from '@/components/ui/Card';
 import { useQuery } from 'react-query';
 import axios from 'axios';
+import { useTheme } from '@/context/AccentColorContext';
 import {
   CheckCircle,
   XCircle,
@@ -22,6 +23,7 @@ import { motion } from 'framer-motion';
 const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 function Attendance() {
+  const { isDebugMode } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -545,6 +547,7 @@ function Attendance() {
 
                       // Get lesson ID for display
                       const lessonId = record.LessonId || (record.Lesson ? record.Lesson.Id : null);
+                      const rawPresenceId = record.PresenceType?.Id || record.presenceTypeId || (typeof record.PresenceType === 'number' ? record.PresenceType : null);
 
                       return (
                         <motion.div
@@ -563,7 +566,7 @@ function Attendance() {
                                 <div className="flex justify-between">
                                   <h4 className="font-medium">{subject}</h4>
                                   <span className={`text-sm ${attendanceData.color}`}>
-                                    {attendanceData.status}
+                                    {attendanceData.status} {isDebugMode && rawPresenceId !== null && `(${rawPresenceId})`}
                                   </span>
                                 </div>
 
@@ -580,6 +583,10 @@ function Attendance() {
 
                                   {lessonId && (
                                     <span className="ml-2 text-xs">ID: {lessonId}</span>
+                                  )}
+
+                                  {isDebugMode && record.Id && (
+                                    <span className="ml-2 text-[10px] text-primary italic">Rec: {record.Id}</span>
                                   )}
                                 </div>
                               </div>

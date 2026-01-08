@@ -5,6 +5,7 @@ import Loading from '@/components/ui/Loading';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import { useVulcanData } from '@/lib/hooks/useVulcanData';
 import { formatGrade, getGradeColor } from '@/lib/utils/formatters';
+import { useTheme } from '@/context/AccentColorContext';
 import { motion } from 'framer-motion';
 import { Trophy, CaretDown, CaretUp, MagnifyingGlass } from '@phosphor-icons/react';
 import withAuth from '@/lib/utils/withAuth';
@@ -41,6 +42,7 @@ interface SubjectWithGrades {
 }
 
 function Grades() {
+  const { isDebugMode } = useTheme();
   const { data: grades, isLoading, error } = useVulcanData('grades');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortCriteria, setSortCriteria] = useState<'name' | 'average'>('name');
@@ -286,6 +288,11 @@ function Grades() {
                               title={tooltipContent}
                             >
                               {formatGrade(grade)}
+                              {isDebugMode && (
+                                <div className="text-[10px] opacity-60 mt-0.5 font-mono">
+                                  W:{(grade as any).Column?.Weight || '?'} | V:{grade.Value || '?'}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

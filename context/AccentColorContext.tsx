@@ -19,7 +19,7 @@ export const BACKGROUND_COLORS = {
   gray: '31, 41, 55', // Gray
   charcoal: '24, 24, 27', // Charcoal
   black: '0, 0, 0', // Pure black
-  
+
   // Light themes
   light: '249, 250, 251', // Default light
   white: '255, 255, 255', // Pure white
@@ -49,16 +49,20 @@ type ThemeContextType = {
   isDarkMode: boolean;
   toggleThemeMode: () => void;
   isThemeLoaded: boolean;
+  isDebugMode: boolean;
+  setIsDebugMode: (value: boolean) => void;
 };
 
 const defaultContext: ThemeContextType = {
   accentColor: ACCENT_COLORS.purple,
-  setAccentColor: () => {},
+  setAccentColor: () => { },
   backgroundColor: BACKGROUND_COLORS.dark,
-  setBackgroundColor: () => {},
+  setBackgroundColor: () => { },
   isDarkMode: true,
-  toggleThemeMode: () => {},
+  toggleThemeMode: () => { },
   isThemeLoaded: false,
+  isDebugMode: false,
+  setIsDebugMode: () => { },
 };
 
 const ThemeContext = createContext<ThemeContextType>(defaultContext);
@@ -68,25 +72,27 @@ export const useTheme = () => useContext(ThemeContext);
 // Create a helper to get theme settings from localStorage
 const getInitialTheme = () => {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const savedAccentColor = localStorage.getItem('accentColor');
     const savedBackgroundColor = localStorage.getItem('backgroundColor');
     const savedThemeMode = localStorage.getItem('isDarkMode');
-    
+    const savedDebugMode = localStorage.getItem('isDebugMode');
+
     const isDarkMode = savedThemeMode === null ? true : savedThemeMode === 'true';
-    
+    const isDebugMode = savedDebugMode === 'true';
+
     // Helper to check if a background belongs to a theme family
-    const isDarkBg = (bg: string) => 
+    const isDarkBg = (bg: string) =>
       Object.entries(BACKGROUND_COLORS)
         .filter(([key]) => ['dark', 'darker', 'navy', 'gray', 'charcoal', 'black'].includes(key))
         .some(([_, value]) => value === bg);
-    
-    const isLightBg = (bg: string) => 
+
+    const isLightBg = (bg: string) =>
       Object.entries(BACKGROUND_COLORS)
         .filter(([key]) => ['light', 'white', 'cream', 'silver', 'lavender', 'mint'].includes(key))
         .some(([_, value]) => value === bg);
-    
+
     // Make sure the background matches the theme mode
     let backgroundColor;
     if (savedBackgroundColor) {
@@ -100,11 +106,12 @@ const getInitialTheme = () => {
     } else {
       backgroundColor = isDarkMode ? BACKGROUND_COLORS.dark : BACKGROUND_COLORS.light;
     }
-    
+
     return {
       accentColor: savedAccentColor || ACCENT_COLORS.purple,
       backgroundColor,
       isDarkMode,
+      isDebugMode,
     };
   } catch (e) {
     console.error('Error reading theme from localStorage', e);
@@ -114,18 +121,18 @@ const getInitialTheme = () => {
 
 // Helper to apply theme to document
 const applyTheme = (
-  accentColor: string, 
-  backgroundColor: string, 
+  accentColor: string,
+  backgroundColor: string,
   isDarkMode: boolean
 ) => {
   if (typeof document === 'undefined') return;
-  
+
   document.documentElement.style.setProperty('--color-primary', accentColor);
   document.documentElement.style.setProperty('--background-rgb', backgroundColor);
-  
+
   // Calculate and update surface and overlay colors based on background
   const [r, g, b] = backgroundColor.split(',').map(Number);
-  
+
   if (isDarkMode) {
     // For dark mode, make surface and overlay lighter than background
     const surfaceRgb = `${Math.min(r + 14, 255)}, ${Math.min(g + 17, 255)}, ${Math.min(b + 16, 255)}`;
@@ -139,12 +146,12 @@ const applyTheme = (
     document.documentElement.style.setProperty('--surface-rgb', surfaceRgb);
     document.documentElement.style.setProperty('--overlay-rgb', overlayRgb);
   }
-  
+
   // Set text colors based on theme mode
   const textColors = isDarkMode ? TEXT_COLORS.dark : TEXT_COLORS.light;
   document.documentElement.style.setProperty('--foreground-rgb', textColors.primary);
   document.documentElement.style.setProperty('--text-secondary-rgb', textColors.secondary);
-  
+
   // Add/remove a data attribute for CSS targeting
   document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
 };
@@ -224,6 +231,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [accentColor, setAccentColorState] = useState<string>(ACCENT_COLORS.purple);
   const [backgroundColor, setBackgroundColorState] = useState<string>(BACKGROUND_COLORS.dark);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isDebugMode, setIsDebugModeState] = useState<boolean>(false);
 
   // Load settings from localStorage on first render
   useEffect(() => {
@@ -232,6 +240,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setAccentColorState(initialTheme.accentColor);
       setBackgroundColorState(initialTheme.backgroundColor);
       setIsDarkMode(initialTheme.isDarkMode);
+      setIsDebugModeState(initialTheme.isDebugMode);
     }
     setIsThemeLoaded(true);
   }, []);
@@ -254,23 +263,30 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const setIsDebugMode = (value: boolean) => {
+    setIsDebugModeState(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isDebugMode', String(value));
+    }
+  };
+
   // Toggle between light and dark mode
   const toggleThemeMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('isDarkMode', String(newMode));
-      
+
       // Check if current background belongs to the current theme family
       const isDarkBg = Object.entries(BACKGROUND_COLORS)
         .filter(([key, _]) => ['dark', 'darker', 'navy', 'gray', 'charcoal', 'black'].includes(key))
         .some(([_, value]) => value === backgroundColor);
-      
+
       const isLightBg = Object.entries(BACKGROUND_COLORS)
         .filter(([key, _]) => ['light', 'white', 'cream', 'silver', 'lavender', 'mint'].includes(key))
         .some(([_, value]) => value === backgroundColor);
-      
+
       // Always switch to appropriate background for the theme
       let newBackground;
       if (newMode) {
@@ -280,10 +296,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         // Switching to light mode
         newBackground = isDarkBg ? BACKGROUND_COLORS.light : backgroundColor;
       }
-      
+
       setBackgroundColorState(newBackground);
       localStorage.setItem('backgroundColor', newBackground);
-      
+
       applyTheme(accentColor, newBackground, newMode);
     }
   };
@@ -305,6 +321,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isDarkMode,
         toggleThemeMode,
         isThemeLoaded,
+        isDebugMode,
+        setIsDebugMode,
       }}
     >
       {children}

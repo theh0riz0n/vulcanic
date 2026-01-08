@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
-import { useCurrentWeekData, useCurrentDayData, useVulcanData } from '@/lib/hooks/useVulcanData';
+import { useCurrentWeekData, useVulcanData } from '@/lib/hooks/useVulcanData';
 import { formatTime } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
 import {
@@ -21,8 +21,53 @@ import { useLanguage } from '@/context/LanguageContext';
 
 function Dashboard() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useCurrentDayData('lessons');
-  const { data: substitutions, isLoading: substitutionsLoading, error: substitutionsError } = useCurrentDayData('substitutions');
+
+  // Logic to determine which date to show and if it's weekend
+  const dateInfo = useMemo(() => {
+    const now = currentDate;
+    const day = now.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
+    const hour = now.getHours();
+
+    let isWeekend = false;
+    let targetDate = new Date(now);
+    let isShowingTomorrow = false;
+
+    if (day === 0) { // Sunday
+      isWeekend = true;
+    } else if (day === 6) { // Saturday
+      isWeekend = true;
+    } else if (day === 5 && hour >= 16) { // Friday after 16:00
+      isWeekend = true;
+    } else if (hour >= 16) { // Mon-Thu after 16:00
+      targetDate.setDate(now.getDate() + 1);
+      isShowingTomorrow = true;
+      // If tomorrow is Saturday, it's actually weekend
+      if (targetDate.getDay() === 6) {
+        isWeekend = true;
+      }
+    }
+
+    // Format targetDate manually to avoid timezone shift from toISOString
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const d = String(targetDate.getDate()).padStart(2, '0');
+    const formattedTargetDate = `${year}-${month}-${d}`;
+
+    return {
+      targetDate,
+      isWeekend,
+      isShowingTomorrow,
+      formattedTargetDate
+    };
+  }, [currentDate]);
+
+  const dateRange = useMemo(() => ({
+    startDate: dateInfo.formattedTargetDate,
+    endDate: dateInfo.formattedTargetDate
+  }), [dateInfo.formattedTargetDate]);
+
+  const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useVulcanData('lessons', dateRange);
+  const { data: substitutions, isLoading: substitutionsLoading, error: substitutionsError } = useVulcanData('substitutions', dateRange);
   const [todaysLessons, setTodaysLessons] = useState<any[]>([]);
   const { t, language } = useLanguage();
 
@@ -77,14 +122,9 @@ function Dashboard() {
   // Combine lessons and substitutions for today
   useEffect(() => {
     if ((lessons && lessons.length > 0) || (substitutions && substitutions.length > 0)) {
-      // Get today's date in local timezone format (YYYY-MM-DD)
-      const todayObj = new Date();
-      const todayYear = todayObj.getFullYear();
-      const todayMonth = String(todayObj.getMonth() + 1).padStart(2, '0');
-      const todayDay = String(todayObj.getDate()).padStart(2, '0');
-      const today = `${todayYear}-${todayMonth}-${todayDay}`;
-
-      console.log('[DEBUG] Today\'s date for filtering:', today);
+      // Get target date string for filtering
+      const targetDateStr = dateInfo.formattedTargetDate;
+      const today = targetDateStr;
 
       // Filter regular lessons
       const filteredLessons = lessons ? lessons.filter((lesson: any) => {
@@ -135,7 +175,6 @@ function Dashboard() {
           lessonDate = lesson.Date.split('T')[0];
         }
 
-        console.log(`[DEBUG] Lesson date: ${lessonDate}, comparing with today: ${today}`);
         return lessonDate === today;
       }) : [];
 
@@ -167,8 +206,6 @@ function Dashboard() {
 
         return substitutionDate === today;
       }) : [];
-
-      console.log(`[DEBUG] Found ${filteredLessons.length} lessons and ${filteredSubstitutions.length} substitutions for today`);
 
       // Process substitutions to mark replaced lessons
       const enhancedLessons = [...filteredLessons];
@@ -346,7 +383,7 @@ function Dashboard() {
     } else {
       setTodaysLessons([]);
     }
-  }, [lessons, substitutions]);
+  }, [lessons, substitutions, dateInfo.formattedTargetDate]);
 
   const getGreeting = () => {
     const hour = currentDate.getHours();
@@ -421,10 +458,23 @@ function Dashboard() {
           ))}
         </div>
 
-        <h2 className="text-xl font-mono font-bold mb-4">{t('dashboard.today')}</h2>
+        <h2 className="text-xl font-mono font-bold mb-4">
+          {dateInfo.isShowingTomorrow ? t('dashboard.tomorrow') : t('dashboard.today')}
+        </h2>
 
-        {/* Display lessons (including substitutions) */}
-        {todaysLessons.length > 0 ? (
+        {dateInfo.isWeekend ? (
+          <Card className="p-8 text-center bg-gradient-to-br from-primary/10 to-accent/10 border-dashed border-2 border-primary/30" withHover={false}>
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <h3 className="text-2xl font-bold text-primary mb-2">✨</h3>
+              <p className="text-lg font-medium text-text-primary mb-1">
+                {t('dashboard.weekendMessage')}
+              </p>
+            </motion.div>
+          </Card>
+        ) : todaysLessons.length > 0 ? (
           <div className="space-y-3">
             {todaysLessons.map((lesson, index) => {
               // Check if this is a substitution

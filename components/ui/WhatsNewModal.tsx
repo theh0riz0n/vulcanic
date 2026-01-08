@@ -3,6 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, X } from '@phosphor-icons/react';
 import Card from './Card';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface WhatsNewModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface WhatsNewModalProps {
 }
 
 const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, version, changelog }) => {
+  const { t } = useLanguage();
   return (
     <AnimatePresence>
       {isOpen && (
@@ -37,8 +39,8 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, version,
                     <Gift size={24} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-text-primary">What's New</h2>
-                    <p className="text-sm text-text-secondary">Version {version}</p>
+                    <h2 className="text-xl font-bold text-text-primary">{t('whatsNew.title')}</h2>
+                    <p className="text-sm text-text-secondary">{t('whatsNew.version')} {version}</p>
                   </div>
                 </div>
                 <button
@@ -51,10 +53,10 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, version,
               </div>
 
               <div className="max-h-60 overflow-y-auto pr-2 space-y-3">
-                <h3 className="font-semibold text-text-primary">Recent Changes:</h3>
-                <div 
+                <h3 className="font-semibold text-text-primary">{t('whatsNew.recentChanges')}</h3>
+                <div
                   className="prose prose-sm prose-invert text-text-secondary whitespace-pre-wrap"
-                  style={{ 
+                  style={{
                     // @ts-ignore
                     '--tw-prose-bullets': 'var(--primary)',
                   }}
@@ -73,7 +75,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, version,
                   onClick={onClose}
                   className="w-full px-4 py-2 font-semibold text-white transition-colors rounded-md bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background"
                 >
-                  Got it!
+                  {t('whatsNew.gotIt')}
                 </button>
               </div>
             </Card>
