@@ -361,16 +361,15 @@ function Attendance() {
   }, [filteredAttendance]);
 
   // Get icon based on attendance type
-  const getAttendanceIcon = (attendanceRecord: any) => {
-    const { status } = formatAttendance(attendanceRecord);
-    switch (status) {
-      case 'Present':
+  const getAttendanceIcon = (presenceTypeId: number) => {
+    switch (presenceTypeId) {
+      case 0: // Present
         return <CheckCircle size={20} weight="fill" className="text-green-500" />;
-      case 'Absent':
+      case 1: // Absent
         return <XCircle size={20} weight="fill" className="text-red-500" />;
-      case 'Late':
+      case 2: // Late
         return <Clock size={20} weight="fill" className="text-orange-500" />;
-      case 'Excused':
+      case 3: // Excused
         return <CheckCircle size={20} weight="fill" className="text-blue-500" />;
       default:
         return <XCircle size={20} weight="fill" className="text-text-secondary" />;
@@ -559,7 +558,7 @@ function Attendance() {
                           <Card className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="flex-shrink-0">
-                                {getAttendanceIcon(record)}
+                                {getAttendanceIcon(presenceTypeId)}
                               </div>
 
                               <div className="flex-1">
