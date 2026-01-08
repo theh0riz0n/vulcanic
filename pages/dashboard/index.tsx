@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
-import { useCurrentWeekData, useCurrentDayData } from '@/lib/hooks/useVulcanData';
+import { useCurrentWeekData, useCurrentDayData, useVulcanData } from '@/lib/hooks/useVulcanData';
 import { formatTime } from '@/lib/utils/formatters';
 import { motion } from 'framer-motion';
 import {
@@ -32,11 +32,37 @@ function Dashboard() {
   // Get user information from localStorage
   const { name, email } = getUserData();
   // Sample static data
+  // Fetch student info
+  const { data: studentInfo, error: studentError, isLoading: studentLoading } = useVulcanData('student-info');
+
+  // Helper to format student name
+  const getStudentName = () => {
+    if (studentInfo?.firstName && studentInfo?.surname) {
+      return `${studentInfo.firstName} ${studentInfo.surname}`;
+    }
+    if (studentError) {
+      return t('error.fetchingData');
+    }
+    return studentLoading ? '...' : (name || 'User');
+  };
+
+  const getStudentClass = () => {
+    if (studentInfo?.classDisplay) return studentInfo.classDisplay;
+    if (studentError) return t('error.fetchingData');
+    return studentLoading ? '...' : (studentInfo?.classDisplay || '...');
+  }
+
+  const getStudentSchool = () => {
+    if (studentInfo?.schoolName) return studentInfo.schoolName;
+    if (studentError) return t('error.fetchingData');
+    return studentLoading ? '...' : (studentInfo?.schoolName || '...');
+  }
+
   const userInfo = {
-    name: name || 'User',
-    email: email || 'user@example.com',
-    class: '3TL',
-    school: 'Zespół Szkół im. Prymasa Tysiąclecia w Teresinie'
+    name: getStudentName(),
+    email: studentInfo?.email || email || 'user@example.com',
+    class: getStudentClass(),
+    school: getStudentSchool()
   };
 
   useEffect(() => {

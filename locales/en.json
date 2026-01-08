@@ -152,5 +152,6 @@
   "messages.subject": "Subject",
   "more.messages.desc": "Check your inbox",
   "about.appVersion": "App Version",
-  "about.commit": "Last Commit"
+  "about.commit": "Last Commit",
+  "error.fetchingData": "unavailable due to error in fetching data"
 }

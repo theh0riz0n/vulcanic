@@ -157,5 +157,6 @@
   "messages.subject": "Temat",
   "more.messages.desc": "Sprawdź skrzynkę odbiorczą",
   "about.appVersion": "Wersja aplikacji",
-  "about.commit": "Ostatni commit"
+  "about.commit": "Ostatni commit",
+  "error.fetchingData": "niedostępne z powodu błędu pobierania danych"
 }
