@@ -55,6 +55,7 @@
   "settings.snowflakes": "Snowflakes",
   "settings.show": "Show",
   "settings.hide": "Hide",
+  "settings.debugMode": "Debug Mode",
   "settings.colorUpdated": "Color updated!",
   "settings.backgroundUpdated": "Background updated!",
   "login.title": "Login to Vulcanic",
@@ -132,9 +133,15 @@
   "homework.today": "Today",
   "homework.expand": "Expand",
   "homework.collapse": "Collapse",
+  "dashboard.weekendMessage": "We wish you a happy and peaceful weekend!",
+  "dashboard.tomorrow": "Tomorrow",
   "about.title": "About",
   "about.whatsNew": "What's New",
   "about.currentVersion": "Current version",
+  "whatsNew.title": "What's New",
+  "whatsNew.version": "Version",
+  "whatsNew.recentChanges": "Recent Changes:",
+  "whatsNew.gotIt": "Got it!",
   "about.unstable": "Unstable Build",
   "about.unstableDesc": "The build of the journal ({version}) may be unstable.",
   "about.viewLatest": "View latest changes",
@@ -152,5 +159,6 @@
   "messages.subject": "Subject",
   "more.messages.desc": "Check your inbox",
   "about.appVersion": "App Version",
-  "about.commit": "Last Commit"
+  "about.commit": "Last Commit",
+  "error.fetchingData": "unavailable due to error in fetching data"
 }

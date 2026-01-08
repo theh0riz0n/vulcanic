@@ -12,23 +12,26 @@ import {
   Snowflake,
   Palette,
   Translate,
-  CaretRight
+  CaretRight,
+  Bug
 } from '@phosphor-icons/react';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageModal from '@/components/ui/LanguageModal';
 
 function Settings() {
-  const { showSnowflakes, setShowSnowflakes, snowflakeIntensity, setSnowflakeIntensity } = useSnowflakes();
-  const { 
-    accentColor, 
-    setAccentColor, 
-    backgroundColor, 
-    setBackgroundColor, 
-    isDarkMode, 
-    toggleThemeMode 
+  const { showSnowflakes, setShowSnowflakes } = useSnowflakes();
+  const {
+    accentColor,
+    setAccentColor,
+    backgroundColor,
+    setBackgroundColor,
+    isDarkMode,
+    toggleThemeMode,
+    isDebugMode,
+    setIsDebugMode
   } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  
+
   const [colorChanged, setColorChanged] = useState(false);
   const [bgChanged, setBgChanged] = useState(false);
   const [isLanguageModalOpen, setLanguageModalOpen] = useState(false);
@@ -39,7 +42,7 @@ function Settings() {
     setColorChanged(true);
     setTimeout(() => setColorChanged(false), 1200);
   };
-  
+
   // Handle background color change with feedback
   const handleBgChange = (color: string) => {
     setBackgroundColor(color);
@@ -78,8 +81,8 @@ function Settings() {
                   <span className="mr-2 text-xs text-text-secondary">
                     {isDarkMode ? t('settings.dark') : t('settings.light')}
                   </span>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     className="sr-only peer"
                     checked={!isDarkMode}
                     onChange={toggleThemeMode}
@@ -106,11 +109,10 @@ function Settings() {
                   <button
                     key={name}
                     onClick={() => handleColorChange(color)}
-                    className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${
-                      accentColor === color 
-                        ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110' 
+                    className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${accentColor === color
+                        ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
                         : 'hover:scale-105'
-                    }`}
+                      }`}
                     style={{ backgroundColor: color }}
                     aria-label={`Set accent color to ${name}`}
                   />
@@ -135,11 +137,10 @@ function Settings() {
                   <button
                     key={name}
                     onClick={() => handleBgChange(color)}
-                    className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${
-                      backgroundColor === color 
-                        ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110' 
+                    className={`w-8 h-8 rounded-full transition-all accent-transition relative flex items-center justify-center ${backgroundColor === color
+                        ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
                         : 'hover:scale-105'
-                    }`}
+                      }`}
                     style={{ backgroundColor: color }}
                     aria-label={`Set background color to ${name}`}
                   />
@@ -170,11 +171,29 @@ function Settings() {
                   <span>{t('settings.snowflakes')}</span>
                 </div>
                 <label className="inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     className="sr-only peer"
                     checked={showSnowflakes}
                     onChange={() => setShowSnowflakes(!showSnowflakes)}
+                  />
+                  <div className="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-text-secondary">
+                  <Bug size={20} className="mr-2" />
+                  <span>{t('settings.debugMode')}</span>
+                </div>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={isDebugMode}
+                    onChange={() => setIsDebugMode(!isDebugMode)}
                   />
                   <div className="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>

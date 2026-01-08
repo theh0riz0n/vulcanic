@@ -345,4 +345,37 @@ export const getMessages = async (folder: number = 0, limit: number = 20) => {
     console.error('Error fetching messages:', error);
     throw error;
   }
+};
+
+// Get student info
+export const getStudentInfo = async () => {
+  try {
+    const hebe = await initVulcan();
+    // The hebe instance has pupilJson which contains the info we need
+    // We need to access it from the instance
+    // Note: hebe.pupilJson is available on the internal instance but strict typing might hide it
+    // We'll trust the JavaScript behavior here or check if we can access it
+
+    // According to my investigation, hebe is an instance of VulcanHebeCe
+    // which has pupilJson property
+    const pupilData = (hebe as any).pupilJson;
+
+    if (pupilData && pupilData.Envelope && pupilData.Envelope[0]) {
+      const envelope = pupilData.Envelope[0];
+      return {
+        classDisplay: envelope.ClassDisplay,
+        schoolName: envelope.ConstituentUnit?.Name || envelope.Unit?.Name,
+        schoolShort: envelope.ConstituentUnit?.Short || envelope.Unit?.Short,
+        pupilId: envelope.Pupil?.Id,
+        firstName: envelope.Pupil?.FirstName,
+        surname: envelope.Pupil?.Surname,
+        email: envelope.Pupil?.LoginValue // Assuming LoginValue might be email-like or username
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching student info:', error);
+    throw error;
+  }
 }; 

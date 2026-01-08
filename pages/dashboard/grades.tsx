@@ -5,6 +5,7 @@ import Loading from '@/components/ui/Loading';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import { useVulcanData } from '@/lib/hooks/useVulcanData';
 import { formatGrade, getGradeColor } from '@/lib/utils/formatters';
+import { useTheme } from '@/context/AccentColorContext';
 import { motion } from 'framer-motion';
 import { Trophy, CaretDown, CaretUp, MagnifyingGlass } from '@phosphor-icons/react';
 import withAuth from '@/lib/utils/withAuth';
@@ -41,33 +42,20 @@ interface SubjectWithGrades {
 }
 
 function Grades() {
+  const { isDebugMode } = useTheme();
   const { data: grades, isLoading, error } = useVulcanData('grades');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortCriteria, setSortCriteria] = useState<'name' | 'average'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { t } = useLanguage();
 
-  useEffect(() => {
-    if (grades) {
-      console.log('Полученные оценки:', grades);
-      if (grades.length > 0) {
-        console.log('Структура первой оценки:', grades[0]);
-        // Проверим, есть ли Subject в оценках
-        console.log('Subject поле:', grades.some(g => g.Subject) ? 'Да' : 'Нет');
-        // Проверим Column поле, которое может содержать информацию о предмете
-        console.log('Column поле:', grades.some(g => g.Column) ? 'Да' : 'Нет');
-        if (grades.some(g => g.Column)) {
-          console.log('Пример Column:', grades.find(g => g.Column)?.Column);
-        }
-      }
-    }
-  }, [grades]);
+
 
   // Group grades by subject
   const subjectGrades = useMemo(() => {
     if (!grades || !grades.length) return [];
 
-    console.log('Начинаю группировку оценок');
+
 
     const subjectsMap = new Map<string, SubjectWithGrades>();
 
@@ -77,7 +65,7 @@ function Grades() {
 
       // Проверяем, является ли subject объектом и преобразуем его в строку при необходимости
       if (subject && typeof subject === 'object') {
-        console.log('Subject - это объект:', subject);
+
         // Пытаемся использовать Name или другое подходящее поле
         if ('Name' in subject && subject.Name) {
           subject = String(subject.Name);
@@ -88,7 +76,7 @@ function Grades() {
       }
 
       if (!subject) {
-        console.log('Оценка без предмета:', grade);
+
         return;
       }
 
@@ -137,7 +125,7 @@ function Grades() {
       }
     });
 
-    console.log('Результат группировки:', Array.from(subjectsMap.values()));
+
     return Array.from(subjectsMap.values());
   }, [grades]);
 
@@ -300,6 +288,11 @@ function Grades() {
                               title={tooltipContent}
                             >
                               {formatGrade(grade)}
+                              {isDebugMode && (
+                                <div className="text-[10px] opacity-60 mt-0.5 font-mono">
+                                  W:{(grade as any).Column?.Weight || '?'} | V:{grade.Value || '?'}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

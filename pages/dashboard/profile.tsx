@@ -26,6 +26,7 @@ import { useSnowflakes } from '@/context/SnowflakesContext';
 import { useTheme, ACCENT_COLORS, BACKGROUND_COLORS } from '@/context/AccentColorContext';
 import { useApiap } from '@/context/ApiapContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useVulcanData } from '@/lib/hooks/useVulcanData';
 
 /**
  * Renders the user profile page.
@@ -56,13 +57,18 @@ function Profile() {
   const { name, email } = getUserData();
 
   // Sample user data with dynamic values from localStorage
+  // Fetch student info
+  const { data: studentInfo, error: studentError, isLoading: studentLoading } = useVulcanData('student-info');
+
+  // Sample user data with dynamic values from localStorage and API
   const userData = {
-    name: name || 'User',
-    email: email || 'user@example.com',
-    class: 'ZSE-I',
-    school: 'Lodz',
-    id: '3dc57ed0-9668-402e-82e9-53c0da5f8aba',
-    unitId: '67b10649-9dce-4738-9a32-88e3c7c1ec88'
+    name: (studentInfo?.firstName && studentInfo?.surname) ? `${studentInfo.firstName} ${studentInfo.surname}` :
+      (studentError ? t('error.fetchingData') : (studentLoading ? '...' : (name || 'User'))),
+    email: studentInfo?.email || email || 'user@example.com',
+    class: studentInfo?.classDisplay || (studentError ? t('error.fetchingData') : (studentLoading ? '...' : '...')),
+    school: studentInfo?.schoolName || (studentError ? t('error.fetchingData') : (studentLoading ? '...' : '...')),
+    id: studentInfo?.pupilId || '...',
+    unitId: '...' // unitId not exposed yet, maybe not needed for UI?
   };
 
   // Handle color change with feedback
