@@ -47,27 +47,13 @@ function Grades() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { t } = useLanguage();
 
-  useEffect(() => {
-    if (grades) {
-      console.log('Полученные оценки:', grades);
-      if (grades.length > 0) {
-        console.log('Структура первой оценки:', grades[0]);
-        // Проверим, есть ли Subject в оценках
-        console.log('Subject поле:', grades.some(g => g.Subject) ? 'Да' : 'Нет');
-        // Проверим Column поле, которое может содержать информацию о предмете
-        console.log('Column поле:', grades.some(g => g.Column) ? 'Да' : 'Нет');
-        if (grades.some(g => g.Column)) {
-          console.log('Пример Column:', grades.find(g => g.Column)?.Column);
-        }
-      }
-    }
-  }, [grades]);
+
 
   // Group grades by subject
   const subjectGrades = useMemo(() => {
     if (!grades || !grades.length) return [];
 
-    console.log('Начинаю группировку оценок');
+
 
     const subjectsMap = new Map<string, SubjectWithGrades>();
 
@@ -77,7 +63,7 @@ function Grades() {
 
       // Проверяем, является ли subject объектом и преобразуем его в строку при необходимости
       if (subject && typeof subject === 'object') {
-        console.log('Subject - это объект:', subject);
+
         // Пытаемся использовать Name или другое подходящее поле
         if ('Name' in subject && subject.Name) {
           subject = String(subject.Name);
@@ -88,7 +74,7 @@ function Grades() {
       }
 
       if (!subject) {
-        console.log('Оценка без предмета:', grade);
+
         return;
       }
 
@@ -137,7 +123,7 @@ function Grades() {
       }
     });
 
-    console.log('Результат группировки:', Array.from(subjectsMap.values()));
+
     return Array.from(subjectsMap.values());
   }, [grades]);
 
