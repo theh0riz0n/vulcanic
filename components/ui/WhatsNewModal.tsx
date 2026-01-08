@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, X } from '@phosphor-icons/react';
 import Card from './Card';
 import { useLanguage } from '@/context/LanguageContext';
+import ReactMarkdown from 'react-markdown';
 
 interface WhatsNewModalProps {
   isOpen: boolean;
@@ -52,21 +53,18 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, version,
                 </button>
               </div>
 
-              <div className="max-h-60 overflow-y-auto pr-2 space-y-3">
+              <div className="max-h-60 overflow-y-auto pr-2">
                 <h3 className="font-semibold text-text-primary">{t('whatsNew.recentChanges')}</h3>
                 <div
-                  className="prose prose-sm prose-invert text-text-secondary whitespace-pre-wrap"
+                  className="prose prose-sm prose-invert text-text-secondary"
                   style={{
                     // @ts-ignore
                     '--tw-prose-bullets': 'var(--primary)',
                   }}
                 >
-                  {changelog.split('\n').map((line, index) => {
-                    if (line.trim().startsWith('-') || line.trim().startsWith('*')) {
-                      return <li key={index} className="ml-4">{line.trim().substring(1).trim()}</li>;
-                    }
-                    return <p key={index}>{line}</p>;
-                  })}
+                  <ReactMarkdown>
+                    {changelog}
+                  </ReactMarkdown>
                 </div>
               </div>
 

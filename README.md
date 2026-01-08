@@ -9,7 +9,7 @@
 - [ ] push notifications
 - [ ] detailed menus
 - [x] fix translations
-- [ ] fix schedule bug
+- [x] fix schedule bug
 - [ ] get messages working..?
 
 ## features
