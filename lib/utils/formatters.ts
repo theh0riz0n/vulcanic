@@ -229,9 +229,11 @@ export const formatAttendance = (attendance: any): { status: string, color: stri
 
   // Map presenceTypeId to status and color
   switch (presenceTypeId) {
-    case 0:
-      return { status: 'Present', color: 'text-green-500' };
     case 1:
+    case 24:
+      return { status: 'Present', color: 'text-green-500' };
+    case 0:
+    case 25:
       return { status: 'Absent', color: 'text-red-500' };
     case 2:
       return { status: 'Late', color: 'text-orange-500' };

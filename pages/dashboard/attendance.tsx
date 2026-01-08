@@ -66,8 +66,8 @@ function Attendance() {
       if (typeof record.PresenceType === 'object' && record.PresenceType !== null) {
         if (typeof record.PresenceType.Id === 'number') {
           // Mapping non-standard codes to standard ones
-          if (record.PresenceType.Id === 1228) return 0; // Absence
-          if (record.PresenceType.Id === 1229) return 1; // Presence
+          if (record.PresenceType.Id === 1228 || record.PresenceType.Id === 25) return 0; // Absence
+          if (record.PresenceType.Id === 1229 || record.PresenceType.Id === 24) return 1; // Presence
           if (record.PresenceType.Id === 1231) return 2; // Late
 
           console.log('Using PresenceType.Id:', record.PresenceType.Id);
@@ -82,8 +82,8 @@ function Attendance() {
       // If PresenceType is a number
       if (typeof record.PresenceType === 'number') {
         // Mapping non-standard codes to standard ones
-        if (record.PresenceType === 1228) return 0; // Absence
-        if (record.PresenceType === 1229) return 1; // Presence
+        if (record.PresenceType === 1228 || record.PresenceType === 25) return 0; // Absence
+        if (record.PresenceType === 1229 || record.PresenceType === 24) return 1; // Presence
         if (record.PresenceType === 1231) return 2; // Late
 
         console.log('Using PresenceType as number:', record.PresenceType);
@@ -94,8 +94,8 @@ function Attendance() {
     // Format with presenceTypeId directly
     if (typeof record.presenceTypeId === 'number') {
       // Mapping non-standard codes to standard ones
-      if (record.presenceTypeId === 1228) return 0; // Absence
-      if (record.presenceTypeId === 1229) return 1; // Presence
+      if (record.presenceTypeId === 1228 || record.presenceTypeId === 25) return 0; // Absence
+      if (record.presenceTypeId === 1229 || record.presenceTypeId === 24) return 1; // Presence
       if (record.presenceTypeId === 1231) return 2; // Late
 
       console.log('Using presenceTypeId:', record.presenceTypeId);
